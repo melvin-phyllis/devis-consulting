@@ -1,0 +1,5 @@
+[17-Feb-2026 12:48:30 UTC] PHP Warning:  require(/home/yacons/public_html/devis-consulting/vendor/autoload.php): Failed to open stream: No such file or directory in /home/yacons/public_html/devis-consulting/artisan on line 10
+[17-Feb-2026 12:48:30 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/yacons/public_html/devis-consulting/vendor/autoload.php' (include_path='.:/opt/alt/php83/usr/share/pear:/opt/alt/php83/usr/share/php:/usr/share/pear:/usr/share/php') in /home/yacons/public_html/devis-consulting/artisan:10
+Stack trace:
+#0 {main}
+  thrown in /home/yacons/public_html/devis-consulting/artisan on line 10

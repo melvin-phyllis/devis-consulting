@@ -5,23 +5,21 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
         // 1. Fix Auto-Increment for remaining tables (Common issue on some cPanel imports)
+        // Sur une base fraîche, les tables sont déjà correctes, donc on ignore les erreurs.
         $tablesToFix = ['produits', 'documents', 'document_lignes', 'settings'];
-        
+
         foreach ($tablesToFix as $table) {
             try {
-                // Try to add Primary Key AND Auto Increment (in case PK is missing)
-                DB::statement("ALTER TABLE `$table` MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY");
-            } catch (\Exception $e) {
-                // If PK already exists, just modify for Auto Increment
                 DB::statement("ALTER TABLE `$table` MODIFY id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT");
+            } catch (\Exception $e) {
+                // Ignore si déjà correct
             }
         }
 

@@ -3,9 +3,14 @@
 @section('title', 'Paramètres - YA Consulting')
 
 @section('styles')
-<style>
-    .logo-preview { max-width: 120px; margin-bottom: 12px; border-radius: 10px; border: 2px solid #e5e7eb; }
-</style>
+    <style>
+        .logo-preview {
+            max-width: 120px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -47,11 +52,31 @@
             <div class="form-row">
                 <div class="form-group">
                     <label>Taux TVA par défaut (%)</label>
-                    <input type="number" name="tva_defaut" value="{{ $settings->tva_defaut ?? 18.00 }}" step="0.01" required>
+                    <input type="number" name="tva_defaut" value="{{ $settings->tva_defaut ?? 18.00 }}" step="0.01"
+                        required>
                 </div>
                 <div class="form-group">
                     <label>Devise</label>
                     <input type="text" name="devise" value="{{ $settings->devise ?? 'FCFA' }}" required>
+                </div>
+            </div>
+
+            <!-- Codification des documents -->
+            <h3 style="margin-top: 24px; margin-bottom: 16px; color: #374151;">📋 Codification des documents</h3>
+            <p style="color: #6b7280; font-size: 14px; margin-bottom: 16px;">
+                Format généré :
+                <strong>{{ ($settings->prefixe_entreprise ?? 'YAC') }}-DV-{{ ($settings->code_ville ?? 'ABJ') }}-{{ date('Y') }}-0001</strong>
+            </p>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Préfixe entreprise (ex: YAC)</label>
+                    <input type="text" name="prefixe_entreprise" value="{{ $settings->prefixe_entreprise ?? 'YAC' }}"
+                        maxlength="10" required>
+                </div>
+                <div class="form-group">
+                    <label>Code ville (ex: ABJ)</label>
+                    <input type="text" name="code_ville" value="{{ $settings->code_ville ?? 'ABJ' }}" maxlength="10"
+                        required>
                 </div>
             </div>
 

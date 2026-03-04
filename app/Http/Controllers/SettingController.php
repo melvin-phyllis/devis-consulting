@@ -15,8 +15,8 @@ class SettingController extends Controller
     public function update(Request $request)
     {
         $settings = \App\Models\Setting::first() ?? new \App\Models\Setting();
-        
-        $data = $request->only(['nom_entreprise', 'adresse', 'telephone', 'email', 'rccm_cc', 'tva_defaut', 'devise', 'site_web']);
+
+        $data = $request->only(['nom_entreprise', 'adresse', 'telephone', 'email', 'rccm_cc', 'tva_defaut', 'devise', 'site_web', 'prefixe_entreprise', 'code_ville']);
 
         // Traiter le logo - ne mettre à jour que s'il y a un nouveau fichier
         if ($request->hasFile('logo')) {
