@@ -28,20 +28,23 @@ class Document extends Model
         $prefixe = $settings->prefixe_entreprise ?? 'YAC';
         $ville = $settings->code_ville ?? 'ABJ';
         $annee = now()->format('Y');
+        $mois = now()->format('m');
 
         // Code type : DV pour devis, FAC pour facture
         $codeType = $type === 'devis' ? 'DV' : 'FAC';
 
-        // Compter les documents de ce type pour l'année en cours (sans le scope user)
+        // Compter les documents de ce type pour l'année et le mois en cours (sans le scope user)
         $count = static::withoutGlobalScope('user')
             ->where('type', $type)
             ->whereYear('created_at', $annee)
+            ->whereMonth('created_at', $mois)
             ->count();
 
         // Numéro séquentiel sur 4 chiffres
         $sequence = str_pad($count + 1, 4, '0', STR_PAD_LEFT);
 
-        return "{$prefixe}-{$codeType}-{$ville}-{$annee}-{$sequence}";
+        // Ajout du mois dans le numéro
+        return "{$prefixe}-{$codeType}-{$ville}-{$annee}{$mois}-{$sequence}";
     }
 
     public function client()
