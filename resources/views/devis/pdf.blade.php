@@ -221,12 +221,13 @@
 
     <!-- Positionné tout en bas à gauche -->
     <div style="position: absolute; bottom: 30px; left: 0; width: 60%;">
+        <span style="font-size:8px; color:#555; margin-left:10px;">Acompte 30% &nbsp;|&nbsp; Validité du devis : 3
+            mois</span>
         <p style="font-size: 10px; margin: 0; line-height: 1.4;">
             <strong>Modes de paiement :</strong><br>
             Chèque, Virement bancaire<br>
             Mobile Money (Wave, Orange, Moov, MTN)
-            <span style="font-size:8px; color:#555; margin-left:10px;">Acompte 30% &nbsp;|&nbsp; Validité du devis : 3
-                mois</span>
+
         </p>
     </div>
 
