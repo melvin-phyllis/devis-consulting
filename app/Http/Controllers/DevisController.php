@@ -20,11 +20,47 @@ class DevisController extends Controller
         return view('devis.index', compact('devis'));
     }
 
-    // Affiche la liste des factures
-    public function facturesIndex()
+    // Affiche la liste des factures (groupées par mois, filtres année/mois/jour)
+    public function facturesIndex(Request $request)
     {
-        $factures = Document::where('type', 'facture')->with('client')->get();
-        return view('factures.index', compact('factures'));
+        $query = Document::where('type', 'facture')->with('client');
+
+        if ($request->filled('annee')) {
+            $query->whereYear('date_emission', $request->annee);
+        }
+        if ($request->filled('mois')) {
+            $query->whereMonth('date_emission', $request->mois);
+        }
+        if ($request->filled('jour')) {
+            $query->whereDay('date_emission', $request->jour);
+        }
+
+        $factures = $query->orderBy('date_emission', 'desc')->get();
+
+        $facturesParMois = $factures->groupBy(function ($doc) {
+            return \Carbon\Carbon::parse($doc->date_emission)->format('Y-m');
+        });
+
+        $moisCourant = now()->format('Y-m');
+
+        // Années disponibles (factures existantes + année courante)
+        $anneesDisponibles = Document::where('type', 'facture')
+            ->selectRaw('YEAR(date_emission) as annee')
+            ->distinct()
+            ->orderBy('annee', 'desc')
+            ->pluck('annee');
+        if ($anneesDisponibles->isEmpty() || !$anneesDisponibles->contains(now()->year)) {
+            $anneesDisponibles = $anneesDisponibles->push(now()->year)->sort()->reverse()->values();
+        }
+
+        return view('factures.index', [
+            'facturesParMois' => $facturesParMois,
+            'moisCourant' => $moisCourant,
+            'filterAnnee' => $request->get('annee'),
+            'filterMois' => $request->get('mois'),
+            'filterJour' => $request->get('jour'),
+            'anneesDisponibles' => $anneesDisponibles,
+        ]);
     }
 
     // Affiche le formulaire de création [cite: 47]

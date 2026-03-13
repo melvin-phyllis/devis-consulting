@@ -37,9 +37,9 @@
                                 <div class="btn-group">
                                     <a href="{{ route('clients.show', $client) }}" class="btn btn-info btn-sm">👁 Voir</a>
                                     <a href="{{ route('clients.edit', $client) }}" class="btn btn-warning btn-sm">✏️ Éditer</a>
-                                    <form action="{{ route('clients.destroy', $client) }}" method="POST" style="display: inline;" onsubmit="return confirm('Supprimer ce client ?');">
+                                    <form action="{{ route('clients.destroy', $client) }}" method="POST" style="display: inline;">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">🗑 Suppr.</button>
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="openDeleteModal(this.closest('form'), 'Supprimer ce client ? Les devis et factures liés restent en base.')">🗑 Suppr.</button>
                                     </form>
                                 </div>
                             </td>

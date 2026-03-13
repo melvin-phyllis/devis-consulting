@@ -50,9 +50,9 @@
                                         @csrf
                                         <button type="submit" class="btn btn-success btn-sm">⚡ Facturer</button>
                                     </form>
-                                    <form action="{{ route('devis.destroy', $devis_item->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce devis ?');">
+                                    <form action="{{ route('devis.destroy', $devis_item->id) }}" method="POST" style="display:inline;">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">🗑 Suppr.</button>
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="openDeleteModal(this.closest('form'), 'Êtes-vous sûr de vouloir supprimer ce devis ? Cette action est irréversible.')">🗑 Suppr.</button>
                                     </form>
                                 </div>
                             </td>

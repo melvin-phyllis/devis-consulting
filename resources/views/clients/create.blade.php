@@ -72,9 +72,9 @@
                             <td>
                                 <div class="btn-group">
                                     <a href="{{ route('clients.edit', $client) }}" class="btn btn-warning btn-sm">✏️ Éditer</a>
-                                    <form action="{{ route('clients.destroy', $client) }}" method="POST" style="display: inline;" onsubmit="return confirm('Supprimer ?');">
+                                    <form action="{{ route('clients.destroy', $client) }}" method="POST" style="display: inline;">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">🗑</button>
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="openDeleteModal(this.closest('form'), 'Supprimer ce client ?')">🗑</button>
                                     </form>
                                 </div>
                             </td>

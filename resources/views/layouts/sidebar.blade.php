@@ -438,6 +438,25 @@
             .sidebar.open { transform: translateX(0); }
             .main-content { margin-left: 0; padding: 20px; padding-top: 70px; }
         }
+
+        /* ================= MODALS ================= */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fff; border-radius: 16px; padding: 28px; max-width: 420px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: modalIn 0.25s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-box h3 { margin: 0 0 12px; font-size: 1.2em; color: #1e1b4b; }
+        .modal-box p { margin: 0 0 24px; color: #6b7280; font-size: 0.95em; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap; }
+        .modal-actions .btn { min-width: 100px; }
     </style>
     @yield('styles')
 </head>
@@ -506,12 +525,36 @@
                 <div class="user-role">Administrateur</div>
             </div>
         </a>
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-            <button type="submit" class="logout-btn">🚪 Déconnexion</button>
-        </form>
+        <button type="button" class="logout-btn" onclick="document.getElementById('modal-logout').classList.add('open')">🚪 Déconnexion</button>
     </div>
 </aside>
+
+{{-- Modal de confirmation de déconnexion --}}
+<div class="modal-overlay" id="modal-logout" role="dialog" aria-modal="true" aria-labelledby="logout-modal-title">
+    <div class="modal-box">
+        <h3 id="logout-modal-title">Confirmer la déconnexion</h3>
+        <p>Êtes-vous sûr de vouloir vous déconnecter ?</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-logout').classList.remove('open')">Annuler</button>
+            <form method="POST" action="{{ route('logout') }}" style="display:inline;">
+                @csrf
+                <button type="submit" class="btn btn-danger">Déconnexion</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Modal de confirmation de suppression (réutilisable) --}}
+<div class="modal-overlay" id="modal-delete" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div class="modal-box">
+        <h3 id="delete-modal-title">Confirmer la suppression</h3>
+        <p id="delete-modal-message">Êtes-vous sûr de vouloir supprimer cet élément ?</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.closeDeleteModal()">Annuler</button>
+            <button type="button" class="btn btn-danger" id="delete-modal-confirm">Supprimer</button>
+        </div>
+    </div>
+</div>
 
 <!-- ========= MAIN CONTENT ========= -->
 <main class="main-content">
@@ -528,6 +571,33 @@
 
 </main>
 
+<script>
+    (function() {
+        window.openDeleteModal = function(form, message) {
+            if (!form || !form.tagName || form.tagName !== 'FORM') return;
+            window._deleteFormToSubmit = form;
+            var msgEl = document.getElementById('delete-modal-message');
+            if (msgEl) msgEl.textContent = message || 'Êtes-vous sûr de vouloir supprimer cet élément ?';
+            document.getElementById('modal-delete').classList.add('open');
+        };
+        window.closeDeleteModal = function() {
+            window._deleteFormToSubmit = null;
+            document.getElementById('modal-delete').classList.remove('open');
+        };
+        document.getElementById('delete-modal-confirm').addEventListener('click', function() {
+            if (window._deleteFormToSubmit) {
+                window._deleteFormToSubmit.submit();
+            }
+            window.closeDeleteModal();
+        });
+        document.getElementById('modal-logout').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('open');
+        });
+        document.getElementById('modal-delete').addEventListener('click', function(e) {
+            if (e.target === this) window.closeDeleteModal();
+        });
+    })();
+</script>
 @yield('scripts')
 </body>
 </html>

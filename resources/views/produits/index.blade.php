@@ -34,9 +34,9 @@
                             <td>
                                 <div class="btn-group">
                                     <a class="btn btn-warning btn-sm" href="{{ route('produits.edit', $produit) }}">✏️ Éditer</a>
-                                    <form action="{{ route('produits.destroy', $produit) }}" method="POST" style="display:inline" onsubmit="return confirm('Supprimer ce produit ?');">
+                                    <form action="{{ route('produits.destroy', $produit) }}" method="POST" style="display:inline">
                                         @csrf @method('DELETE')
-                                        <button class="btn btn-danger btn-sm" type="submit">🗑 Suppr.</button>
+                                        <button class="btn btn-danger btn-sm" type="button" onclick="openDeleteModal(this.closest('form'), 'Supprimer ce produit du catalogue ?')">🗑 Suppr.</button>
                                     </form>
                                 </div>
                             </td>
