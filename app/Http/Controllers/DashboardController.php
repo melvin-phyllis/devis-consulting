@@ -20,10 +20,8 @@ class DashboardController extends Controller
         // Chiffre d'affaires prévu (total des factures)
         $CA_Prevu = Document::where('type', 'facture')->sum('total_ttc');
 
-        // Chiffre d'affaires encaissé (factures payées)
-        $CA_Encaisse = Document::where('type', 'facture')
-            ->where('statut', 'payé')
-            ->sum('total_ttc');
+        // Chiffre d'affaires encaissé (somme des montants déjà payés)
+        $CA_Encaisse = Document::where('type', 'facture')->sum('montant_paye');
 
         // Calcul du pourcentage de devis transformés en factures
         $devisTransformes = $totalFactures; // hypothèse: chaque facture correspond à un devis transformé
@@ -34,15 +32,15 @@ class DashboardController extends Controller
                 $percentTransformed = 100;
             }
         }
-        // Factures en retard (> 7 jours et non payées)
-        $facturesEnRetard = Document::where('type', 'facture')
-            ->where('statut', '!=', 'payé')
+        // Factures en retard (> 7 jours et non soldées) — limitées à 10 pour le dashboard
+        $queryRetard = Document::where('type', 'facture')
+            ->whereRaw('COALESCE(montant_paye, 0) < total_ttc')
             ->where('date_emission', '<', now()->subDays(7))
-            ->with('client')
-            ->orderBy('date_emission', 'asc')
-            ->get();
+            ->orderBy('date_emission', 'asc');
+        $totalFacturesEnRetard = $queryRetard->count();
+        $facturesEnRetard = (clone $queryRetard)->with('client')->limit(10)->get();
 
-        return view('dashboard', compact('totalDevis', 'totalFactures', 'CA_Prevu', 'CA_Encaisse', 'percentTransformed', 'facturesEnRetard'));
+        return view('dashboard', compact('totalDevis', 'totalFactures', 'CA_Prevu', 'CA_Encaisse', 'percentTransformed', 'facturesEnRetard', 'totalFacturesEnRetard'));
     }
 
     /**
@@ -50,7 +48,7 @@ class DashboardController extends Controller
      */
     public function repairDb()
     {
-        $tables = ['migrations', 'users', 'clients', 'produits', 'documents', 'document_lignes', 'settings'];
+        $tables = ['migrations', 'users', 'clients', 'produits', 'documents', 'document_lignes', 'paiements', 'settings'];
         $results = [];
 
         foreach ($tables as $table) {

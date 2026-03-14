@@ -153,17 +153,20 @@
         <p class="progress-label">{{ $percentTransformed ?? 0 }}% des devis transformés en factures</p>
     </div>
 
-    <!-- Factures en Retard -->
+    <!-- Factures en Retard (affichage des 10 plus anciennes) -->
     @if(isset($facturesEnRetard) && $facturesEnRetard->count() > 0)
     <div class="content-card" style="border-left: 4px solid #ef4444; margin-bottom: 32px;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
             <h2 style="color: #991b1b; font-size: 1.1em; margin: 0; display: flex; align-items: center; gap: 8px;">
                 <span style="display: inline-block; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; animation: pulse 1.5s infinite;"></span>
                 🚨 Factures en Retard
-                <span class="badge badge-danger">{{ $facturesEnRetard->count() }}</span>
+                <span class="badge badge-danger">{{ $totalFacturesEnRetard ?? $facturesEnRetard->count() }}</span>
             </h2>
-            <a href="{{ route('factures.index') }}" class="btn btn-danger btn-sm">Voir toutes les factures →</a>
+            <a href="{{ route('factures.index') }}" class="btn btn-danger btn-sm">Voir tout ({{ $totalFacturesEnRetard ?? $facturesEnRetard->count() }} en retard) →</a>
         </div>
+        @if(($totalFacturesEnRetard ?? 0) > 10)
+        <p style="font-size: 0.85em; color: #6b7280; margin-bottom: 12px;">Affichage des <strong>10 factures les plus anciennes</strong>. Voir la liste complète sur la page Factures.</p>
+        @endif
         <table>
             <thead>
                 <tr>
@@ -189,10 +192,7 @@
                     </td>
                     <td><strong>{{ number_format($facture->total_ttc, 0, ',', ' ') }} FCFA</strong></td>
                     <td>
-                        <form action="{{ route('facture.payer', $facture->id) }}" method="POST" style="display:inline;">
-                            @csrf
-                            <button type="submit" class="btn btn-success btn-sm">💰 Marquer payée</button>
-                        </form>
+                        <a href="{{ route('devis.show', $facture->id) }}" class="btn btn-success btn-sm">💰 Paiement</a>
                     </td>
                 </tr>
                 @endforeach

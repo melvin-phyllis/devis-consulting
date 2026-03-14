@@ -7,17 +7,53 @@ use App\Models\Document;
 use App\Models\Client;
 use App\Models\Produit;
 use App\Models\DocumentLigne;
+use App\Models\Paiement;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Validation\Rule;
 
 class DevisController extends Controller
 {
-    // Affiche la liste des devis [cite: 46]
-    public function index()
+    // Affiche la liste des devis (groupés par mois, filtres année/mois/jour)
+    public function index(Request $request)
     {
-        $devis = Document::where('type', 'devis')->with('client')->get();
-        return view('devis.index', compact('devis'));
+        $query = Document::where('type', 'devis')->with('client');
+
+        if ($request->filled('annee')) {
+            $query->whereYear('date_emission', $request->annee);
+        }
+        if ($request->filled('mois')) {
+            $query->whereMonth('date_emission', $request->mois);
+        }
+        if ($request->filled('jour')) {
+            $query->whereDay('date_emission', $request->jour);
+        }
+
+        $devis = $query->orderBy('date_emission', 'desc')->get();
+
+        $devisParMois = $devis->groupBy(function ($doc) {
+            return \Carbon\Carbon::parse($doc->date_emission)->format('Y-m');
+        });
+
+        $moisCourant = now()->format('Y-m');
+
+        $anneesDisponibles = Document::where('type', 'devis')
+            ->selectRaw('YEAR(date_emission) as annee')
+            ->distinct()
+            ->orderBy('annee', 'desc')
+            ->pluck('annee');
+        if ($anneesDisponibles->isEmpty() || !$anneesDisponibles->contains(now()->year)) {
+            $anneesDisponibles = $anneesDisponibles->push(now()->year)->sort()->reverse()->values();
+        }
+
+        return view('devis.index', [
+            'devisParMois' => $devisParMois,
+            'moisCourant' => $moisCourant,
+            'filterAnnee' => $request->get('annee'),
+            'filterMois' => $request->get('mois'),
+            'filterJour' => $request->get('jour'),
+            'anneesDisponibles' => $anneesDisponibles,
+        ]);
     }
 
     // Affiche la liste des factures (groupées par mois, filtres année/mois/jour)
@@ -68,8 +104,7 @@ class DevisController extends Controller
     {
         $clients = Client::all();
         $produits = Produit::all();
-        $devis = Document::where('type', 'devis')->with('client')->get();
-        return view('devis.create', compact('clients', 'produits', 'devis'));
+        return view('devis.create', compact('clients', 'produits'));
     }
 
     // Enregistre le devis — formulaire tout-en-un
@@ -218,22 +253,30 @@ class DevisController extends Controller
             "Expires" => "0"
         ];
 
-        $columns = ['Numéro', 'Client', 'Date Emission', 'Total HT', 'Total TVA', 'Total TTC', 'Statut'];
+        $columns = ['Numéro', 'Client', 'Date Emission', 'Total HT', 'Total TVA', 'Total TTC', 'Montant payé', 'Reste à payer', 'Statut'];
 
         $callback = function () use ($factures, $columns) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, $columns, ';'); // Excel prefers semicolon in some regions
+            fputcsv($file, $columns, ';');
 
             foreach ($factures as $facture) {
-                $row['Numéro'] = $facture->numero;
-                $row['Client'] = $facture->client->raison_sociale ?? 'Inconnu';
-                $row['Date'] = $facture->date_emission;
-                $row['HT'] = $facture->total_ht;
-                $row['TVA'] = $facture->total_tva;
-                $row['TTC'] = $facture->total_ttc;
-                $row['Statut'] = $facture->statut;
+                $paye = (float) ($facture->montant_paye ?? 0);
+                $ttc = (float) $facture->total_ttc;
+                $reste = max(0, $ttc - $paye);
+                $statut = $paye <= 0 ? 'Non payée' : ($paye >= $ttc ? 'Soldée' : 'Partiellement payée');
 
-                fputcsv($file, array_values($row), ';');
+                $row = [
+                    $facture->numero,
+                    $facture->client->raison_sociale ?? 'Inconnu',
+                    $facture->date_emission,
+                    $facture->total_ht,
+                    $facture->total_tva,
+                    $facture->total_ttc,
+                    $paye,
+                    $reste,
+                    $statut,
+                ];
+                fputcsv($file, $row, ';');
             }
 
             fclose($file);
@@ -243,7 +286,7 @@ class DevisController extends Controller
     }
     public function download($id)
     {
-        $devis = \App\Models\Document::with(['client', 'lignes'])->findOrFail($id);
+        $devis = \App\Models\Document::with(['client', 'lignes', 'paiements'])->findOrFail($id);
         $settings = \App\Models\Setting::first();
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('devis.pdf', compact('devis', 'settings'));
         return $pdf->download('Devis_' . $devis->numero . '.pdf');
@@ -270,6 +313,7 @@ class DevisController extends Controller
         $facture->numero = Document::genererNumero('facture');
         $facture->statut = 'en attente';
         $facture->titre_document = 'FACTURE';
+        $facture->montant_paye = 0;
         $facture->save();
 
         // On copie aussi toutes les lignes du devis vers la facture
@@ -285,7 +329,7 @@ class DevisController extends Controller
     // Affiche un devis spécifique
     public function show($id)
     {
-        $devis = Document::with(['client', 'lignes'])->findOrFail($id);
+        $devis = Document::with(['client', 'lignes', 'paiements'])->findOrFail($id);
         $settings = \App\Models\Setting::first();
         return view('devis.show', compact('devis', 'settings'));
     }
@@ -376,11 +420,51 @@ class DevisController extends Controller
     }
     public function marquerCommePaye($id)
     {
-        $facture = \App\Models\Document::findOrFail($id);
+        $facture = Document::findOrFail($id);
+        $facture->montant_paye = $facture->total_ttc;
         $facture->statut = 'payé';
         $facture->save();
 
         return redirect()->route('factures.index')->with('success', 'Facture marquée comme payée !');
+    }
+
+    /** Enregistrer un paiement (partiel ou total) sur une facture */
+    public function enregistrerPaiement(Request $request, $id)
+    {
+        $facture = Document::where('type', 'facture')->findOrFail($id);
+        $reste = $facture->reste_a_payer;
+
+        if ($reste <= 0) {
+            return redirect()->back()->with('error', 'Cette facture est déjà soldée.');
+        }
+        $request->validate([
+            'montant' => 'required|numeric|min:0.01|max:' . (max(0, $reste)),
+            'date_paiement' => 'required|date',
+            'mode_paiement' => 'nullable|string|max:100',
+            'reference' => 'nullable|string|max:255',
+        ], [
+            'montant.max' => 'Le montant ne peut pas dépasser le reste à payer (' . number_format($reste, 0, ',', ' ') . ' FCFA).',
+        ]);
+
+        Paiement::create([
+            'document_id' => $facture->id,
+            'montant' => $request->montant,
+            'date_paiement' => $request->date_paiement,
+            'mode_paiement' => $request->mode_paiement,
+            'reference' => $request->reference,
+        ]);
+
+        $facture->montant_paye = (float) $facture->montant_paye + (float) $request->montant;
+        if ($facture->montant_paye >= (float) $facture->total_ttc) {
+            $facture->statut = 'payé';
+        }
+        $facture->save();
+
+        $message = $facture->statut_paiement === 'soldée'
+            ? 'Paiement enregistré. Facture soldée !'
+            : 'Paiement de ' . number_format((float) $request->montant, 0, ',', ' ') . ' FCFA enregistré.';
+
+        return redirect()->back()->with('success', $message);
     }
 }
 

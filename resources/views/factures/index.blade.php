@@ -31,6 +31,8 @@
     .accordion-content { display: none; padding: 0; }
     .accordion-content.open { display: block; }
     .accordion-content .table-wrap { padding: 0 20px 20px; overflow-x: auto; }
+    .payment-progress { font-size: 0.85em; color: #6b7280; }
+    .payment-progress.soldée { color: #059669; font-weight: 600; }
 </style>
 @endsection
 
@@ -112,26 +114,34 @@
                                             <th>Client</th>
                                             <th>Date d'émission</th>
                                             <th>Montant TTC</th>
+                                            <th>Payé / Total</th>
                                             <th>Statut</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach($factures as $facture)
+                                            @php
+                                                $paye = (float) ($facture->montant_paye ?? 0);
+                                                $ttc = (float) $facture->total_ttc;
+                                                $reste = $facture->reste_a_payer;
+                                                $statutPaiement = $facture->statut_paiement;
+                                            @endphp
                                             <tr>
                                                 <td><strong>{{ $facture->numero ?? 'N/A' }}</strong></td>
                                                 <td>{{ $facture->client->raison_sociale ?? 'Client supprimé' }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($facture->date_emission)->format('d/m/Y') }}</td>
-                                                <td><strong>{{ number_format($facture->total_ttc ?? 0, 2, ',', ' ') }} FCFA</strong></td>
+                                                <td><strong>{{ number_format($ttc, 0, ',', ' ') }} FCFA</strong></td>
+                                                <td class="payment-progress {{ $statutPaiement === 'soldée' ? 'soldée' : '' }}">
+                                                    {{ number_format($paye, 0, ',', ' ') }} / {{ number_format($ttc, 0, ',', ' ') }} FCFA
+                                                </td>
                                                 <td>
-                                                    @if($facture->statut === 'payé')
-                                                        <span class="badge badge-success">✓ Payée</span>
-                                                    @elseif($facture->statut === 'accepte')
-                                                        <span class="badge badge-info">✓ Acceptée</span>
-                                                    @elseif($facture->statut === 'refuse')
-                                                        <span class="badge badge-danger">✗ Refusée</span>
+                                                    @if($statutPaiement === 'soldée')
+                                                        <span class="badge badge-success">✓ Soldée</span>
+                                                    @elseif($statutPaiement === 'partiellement payée')
+                                                        <span class="badge badge-info">📊 Partielle</span>
                                                     @else
-                                                        <span class="badge badge-warning">⏱ En attente</span>
+                                                        <span class="badge badge-warning">⏱ Non payée</span>
                                                     @endif
                                                 </td>
                                                 <td>
@@ -139,11 +149,8 @@
                                                         <a href="{{ route('devis.show', $facture->id) }}" class="btn btn-info btn-sm">👁 Voir</a>
                                                         <a href="{{ route('devis.show', $facture->id) }}?print=1" target="_blank" class="btn btn-secondary btn-sm" style="background: #6b7280; color: white;">🖨 Impr.</a>
                                                         <a href="{{ route('factures.download', $facture->id) }}" class="btn btn-primary btn-sm">📥 PDF</a>
-                                                        @if($facture->statut !== 'payé')
-                                                            <form action="{{ route('facture.payer', $facture->id) }}" method="POST" style="display:inline;">
-                                                                @csrf
-                                                                <button type="submit" class="btn btn-success btn-sm">💰 Payée</button>
-                                                            </form>
+                                                        @if($reste > 0)
+                                                            <button type="button" class="btn btn-success btn-sm" onclick="openPaiementModal({{ $facture->id }}, {{ $reste }}, '{{ $facture->numero }}')">💰 Paiement</button>
                                                         @endif
                                                         <form action="{{ route('devis.destroy', $facture->id) }}" method="POST" style="display:inline;" id="delete-facture-{{ $facture->id }}">
                                                             @csrf @method('DELETE')
@@ -171,9 +178,65 @@
         @endif
     </div>
 
+    {{-- Modal Enregistrer un paiement --}}
+    <div class="modal-overlay" id="modal-paiement" style="display: none;">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <h3>💰 Enregistrer un paiement</h3>
+            <p id="paiement-modal-numero" style="margin-bottom: 16px; color: #1e1b4b; font-weight: 600;"></p>
+            <form action="" method="POST" id="form-paiement">
+                @csrf
+                <div class="form-group">
+                    <label for="paiement_montant">Montant (FCFA) *</label>
+                    <input type="number" name="montant" id="paiement_montant" step="0.01" min="0.01" required placeholder="Reste à payer">
+                </div>
+                <div class="form-group">
+                    <label for="paiement_date">Date du paiement *</label>
+                    <input type="date" name="date_paiement" id="paiement_date" value="{{ date('Y-m-d') }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="paiement_mode">Mode de paiement</label>
+                    <select name="mode_paiement" id="paiement_mode">
+                        <option value="">-- Choisir --</option>
+                        <option value="Virement">Virement</option>
+                        <option value="Espèces">Espèces</option>
+                        <option value="Chèque">Chèque</option>
+                        <option value="Mobile Money">Mobile Money</option>
+                        <option value="Carte bancaire">Carte bancaire</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="paiement_reference">Référence (n° chèque, virement…)</label>
+                    <input type="text" name="reference" id="paiement_reference" placeholder="Optionnel">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closePaiementModal()">Annuler</button>
+                    <button type="submit" class="btn btn-success">Enregistrer le paiement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     @if($facturesParMois->count() > 0)
     @section('scripts')
     <script>
+        function openPaiementModal(factureId, reste, numero) {
+            var form = document.getElementById('form-paiement');
+            var baseUrl = '{{ url("factures") }}';
+            form.action = baseUrl + '/' + factureId + '/paiements';
+            document.getElementById('paiement_montant').setAttribute('max', reste);
+            document.getElementById('paiement_montant').value = '';
+            document.getElementById('paiement-modal-numero').textContent = 'Facture ' + numero + ' — Reste à payer : ' + new Intl.NumberFormat('fr-FR').format(reste) + ' FCFA';
+            document.getElementById('modal-paiement').style.display = 'flex';
+            document.getElementById('modal-paiement').classList.add('open');
+        }
+        function closePaiementModal() {
+            document.getElementById('modal-paiement').style.display = 'none';
+            document.getElementById('modal-paiement').classList.remove('open');
+        }
+        document.getElementById('modal-paiement').addEventListener('click', function(e) {
+            if (e.target === this) closePaiementModal();
+        });
         (function() {
             var headers = document.querySelectorAll('.accordion-header');
             headers.forEach(function(header) {

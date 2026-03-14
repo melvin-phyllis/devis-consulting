@@ -1,6 +1,6 @@
 @extends('layouts.sidebar')
 
-@section('title', 'Détails du Devis - YA Consulting')
+@section('title', ($devis->type === 'facture' ? 'Détails Facture' : 'Détails du Devis') . ' - YA Consulting')
 
 @section('styles')
 <style>
@@ -33,20 +33,34 @@
     <!-- Header -->
     <div class="page-header">
         <div>
-            <h1>Devis #{{ $devis->numero }}</h1>
-            <span class="badge {{ $devis->statut === 'accepte' ? 'badge-success' : ($devis->statut === 'refuse' ? 'badge-danger' : 'badge-warning') }}" style="margin-top: 8px;">
-                {{ ucfirst($devis->statut) }}
-            </span>
+            <h1>{{ $devis->type === 'facture' ? 'Facture' : 'Devis' }} #{{ $devis->numero }}</h1>
+            @if($devis->type === 'facture')
+                @php $statutPaiement = $devis->statut_paiement; @endphp
+                <span class="badge {{ $statutPaiement === 'soldée' ? 'badge-success' : ($statutPaiement === 'partiellement payée' ? 'badge-info' : 'badge-warning') }}" style="margin-top: 8px;">
+                    {{ $statutPaiement === 'soldée' ? 'Soldée' : ($statutPaiement === 'partiellement payée' ? 'Partiellement payée' : 'Non payée') }}
+                </span>
+            @else
+                <span class="badge {{ $devis->statut === 'accepte' ? 'badge-success' : ($devis->statut === 'refuse' ? 'badge-danger' : 'badge-warning') }}" style="margin-top: 8px;">
+                    {{ ucfirst($devis->statut) }}
+                </span>
+            @endif
         </div>
         <div class="btn-group">
-            <a href="{{ route('devis.index') }}" class="btn btn-secondary">← Retour</a>
-            <a href="{{ route('devis.edit', $devis->id) }}" class="btn btn-warning">✏️ Éditer</a>
+            <a href="{{ $devis->type === 'facture' ? route('factures.index') : route('devis.index') }}" class="btn btn-secondary">← Retour</a>
+            @if($devis->type === 'devis')
+                <a href="{{ route('devis.edit', $devis->id) }}" class="btn btn-warning">✏️ Éditer</a>
+            @endif
             <a href="{{ route('devis.download', $devis->id) }}" class="btn btn-info">📥 PDF</a>
             <button onclick="window.print()" class="btn btn-primary" style="background: linear-gradient(135deg, #4f46e5, #3730a3);">🖨 Imprimer le Document</button>
-            <form action="{{ route('devis.transformer', $devis->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Transformer ce devis en facture ?');">
-                @csrf
-                <button type="submit" class="btn btn-success">⚡ Convertir en Facture</button>
-            </form>
+            @if($devis->type === 'devis')
+                <form action="{{ route('devis.transformer', $devis->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Transformer ce devis en facture ?');">
+                    @csrf
+                    <button type="submit" class="btn btn-success">⚡ Convertir en Facture</button>
+                </form>
+            @endif
+            @if($devis->type === 'facture' && $devis->reste_a_payer > 0)
+                <button type="button" class="btn btn-success" onclick="openPaiementModal({{ $devis->id }}, {{ $devis->reste_a_payer }}, '{{ $devis->numero }}')">💰 Enregistrer un paiement</button>
+            @endif
         </div>
     </div>
 
@@ -131,9 +145,89 @@
                     <span>Total TTC</span>
                     <span>{{ number_format($devis->total_ttc, 0, ',', ' ') }} FCFA</span>
                 </div>
+                @if($devis->type === 'facture')
+                    @php $paye = (float)($devis->montant_paye ?? 0); $reste = $devis->reste_a_payer; @endphp
+                    <div class="total-row" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                        <span>Montant payé</span>
+                        <span>{{ number_format($paye, 0, ',', ' ') }} FCFA</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Reste à payer</span>
+                        <span style="font-weight: 700; color: {{ $reste > 0 ? '#dc2626' : '#059669' }};">{{ number_format($reste, 0, ',', ' ') }} FCFA</span>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
+
+    @if($devis->type === 'facture')
+    <div class="content-card">
+        <h3 style="color: #1e1b4b; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 16px;">💰 Paiements</h3>
+        @if($devis->paiements->count() > 0)
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Montant</th>
+                        <th>Mode</th>
+                        <th>Référence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($devis->paiements as $p)
+                    <tr>
+                        <td>{{ $p->date_paiement->format('d/m/Y') }}</td>
+                        <td><strong>{{ number_format($p->montant, 0, ',', ' ') }} FCFA</strong></td>
+                        <td>{{ $p->mode_paiement ?? '—' }}</td>
+                        <td>{{ $p->reference ?? '—' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <p style="color: #6b7280; font-style: italic;">Aucun paiement enregistré.</p>
+        @endif
+    </div>
+
+    {{-- Modal Paiement (facture) --}}
+    <div class="modal-overlay" id="modal-paiement" style="display: none;">
+        <div class="modal-box" onclick="event.stopPropagation()">
+            <h3>💰 Enregistrer un paiement</h3>
+            <p id="paiement-modal-numero" style="margin-bottom: 16px; color: #1e1b4b; font-weight: 600;"></p>
+            <form action="" method="POST" id="form-paiement">
+                @csrf
+                <div class="form-group">
+                    <label for="paiement_montant">Montant (FCFA) *</label>
+                    <input type="number" name="montant" id="paiement_montant" step="0.01" min="0.01" required placeholder="Reste à payer">
+                </div>
+                <div class="form-group">
+                    <label for="paiement_date">Date du paiement *</label>
+                    <input type="date" name="date_paiement" id="paiement_date" value="{{ date('Y-m-d') }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="paiement_mode">Mode de paiement</label>
+                    <select name="mode_paiement" id="paiement_mode">
+                        <option value="">-- Choisir --</option>
+                        <option value="Virement">Virement</option>
+                        <option value="Espèces">Espèces</option>
+                        <option value="Chèque">Chèque</option>
+                        <option value="Mobile Money">Mobile Money</option>
+                        <option value="Carte bancaire">Carte bancaire</option>
+                        <option value="Autre">Autre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="paiement_reference">Référence</label>
+                    <input type="text" name="reference" id="paiement_reference" placeholder="Optionnel">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closePaiementModal()">Annuler</button>
+                    <button type="submit" class="btn btn-success">Enregistrer le paiement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
 @endsection
 @section('scripts')
 <script>
@@ -142,6 +236,24 @@
         if (urlParams.has('print')) {
             window.print();
         }
+    };
+    @if($devis->type === 'facture' && $devis->reste_a_payer > 0)
+    function openPaiementModal(factureId, reste, numero) {
+        var form = document.getElementById('form-paiement');
+        form.action = '{{ url("factures") }}' + '/' + factureId + '/paiements';
+        document.getElementById('paiement_montant').setAttribute('max', reste);
+        document.getElementById('paiement_montant').value = '';
+        document.getElementById('paiement-modal-numero').textContent = 'Facture ' + numero + ' — Reste à payer : ' + new Intl.NumberFormat('fr-FR').format(reste) + ' FCFA';
+        document.getElementById('modal-paiement').style.display = 'flex';
+        document.getElementById('modal-paiement').classList.add('open');
     }
+    function closePaiementModal() {
+        document.getElementById('modal-paiement').style.display = 'none';
+        document.getElementById('modal-paiement').classList.remove('open');
+    }
+    document.getElementById('modal-paiement').addEventListener('click', function(e) {
+        if (e.target === this) closePaiementModal();
+    });
+    @endif
 </script>
 @endsection

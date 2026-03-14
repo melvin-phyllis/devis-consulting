@@ -100,6 +100,10 @@
             font-weight: bold;
         }
 
+        .total-table tr.row-highlight td {
+            background-color: #e5e7eb;
+        }
+
         /* Pied de page bleu */
         .footer-blue {
             position: fixed;
@@ -207,13 +211,43 @@
                 <td>TVA (18%)</td>
                 <td class="text-right">{{ number_format($devis->total_tva, 0, ',', ' ') }}</td>
             </tr>
-            <tr>
+            <tr class="row-highlight">
                 <td>TOTAL TTC</td>
                 <td class="text-right">{{ number_format($devis->total_ttc, 0, ',', ' ') }}</td>
             </tr>
+            @if(isset($devis->type) && $devis->type === 'facture')
+            @php
+                $paye = (float) ($devis->montant_paye ?? 0);
+                $reste = max(0, (float) $devis->total_ttc - $paye);
+            @endphp
+            <tr>
+                <td>DÉJÀ PAYÉ</td>
+                <td class="text-right">{{ number_format($paye, 0, ',', ' ') }} FCFA</td>
+            </tr>
+            <tr class="row-highlight">
+                <td>RESTE DÛ</td>
+                <td class="text-right">
+                    @if($reste <= 0)
+                        0 FCFA (Soldée)
+                    @else
+                        {{ number_format($reste, 0, ',', ' ') }} FCFA
+                    @endif
+                </td>
+            </tr>
+            @endif
             <tr>
                 <td colspan="2" style="font-size: 9px; font-style: italic; padding-top: 8px; border: none;">
-                    <strong>Montant en lettres :</strong> {{ ucfirst($devis->montant_en_lettres) }}
+                    @if(isset($devis->type) && $devis->type === 'facture')
+                        @php $resteLettres = (int) $devis->reste_a_payer; @endphp
+                        <strong>Reste dû en lettres :</strong>
+                        @if($resteLettres <= 0)
+                            Zéro franc CFA (facture soldée).
+                        @else
+                            {{ ucfirst(\App\Models\Document::nombreEnLettres($resteLettres)) }} francs CFA
+                        @endif
+                    @else
+                        <strong>Montant en lettres :</strong> {{ ucfirst($devis->montant_en_lettres) }}
+                    @endif
                 </td>
             </tr>
         </table>
@@ -221,13 +255,33 @@
 
     <!-- Positionné tout en bas à gauche -->
     <div style="position: absolute; bottom: 30px; left: 0; width: 60%;">
-        <span style="font-size:8px; color:#555; margin-left:10px; white-space: nowrap;">Acompte 30% &nbsp;|&nbsp; Validité du devis : 3 mois</span>
-        <p style="font-size: 10px; margin: 0; line-height: 1.4;">
-            <strong>Modes de paiement :</strong><br>
-            Chèque, Virement bancaire<br>
-            Mobile Money (Wave, Orange, Moov, MTN)
-
-        </p>
+        @if(isset($devis->type) && $devis->type === 'facture')
+            <p style="font-size: 10px; margin: 0 0 8px 10px; line-height: 1.4;">
+                <strong>Modes de paiement acceptés :</strong><br>
+                Chèque, Virement bancaire, Mobile Money (Wave, Orange, Moov, MTN)
+            </p>
+            @if(isset($devis->paiements) && $devis->paiements->count() > 0)
+                <p style="font-size: 9px; margin: 0 0 4px 10px; color:#555;"><strong>Paiements reçus :</strong></p>
+                <table style="font-size: 8px; margin-left: 10px; border-collapse: collapse;">
+                    <tr style="background: #f3f4f6;"><th style="border: 1px solid #ccc; padding: 2px 6px; text-align: left;">Date</th><th style="border: 1px solid #ccc; padding: 2px 6px; text-align: right;">Montant</th><th style="border: 1px solid #ccc; padding: 2px 6px;">Mode</th><th style="border: 1px solid #ccc; padding: 2px 6px;">Réf.</th></tr>
+                    @foreach($devis->paiements as $p)
+                    <tr>
+                        <td style="border: 1px solid #ccc; padding: 2px 6px;">{{ $p->date_paiement->format('d/m/Y') }}</td>
+                        <td style="border: 1px solid #ccc; padding: 2px 6px; text-align: right;">{{ number_format($p->montant, 0, ',', ' ') }} FCFA</td>
+                        <td style="border: 1px solid #ccc; padding: 2px 6px;">{{ $p->mode_paiement ?? '—' }}</td>
+                        <td style="border: 1px solid #ccc; padding: 2px 6px;">{{ $p->reference ?? '—' }}</td>
+                    </tr>
+                    @endforeach
+                </table>
+            @endif
+        @else
+            <span style="font-size:8px; color:#555; margin-left:10px; white-space: nowrap;">Acompte 30% &nbsp;|&nbsp; Validité du devis : 3 mois</span>
+            <p style="font-size: 10px; margin: 0; line-height: 1.4;">
+                <strong>Modes de paiement :</strong><br>
+                Chèque, Virement bancaire<br>
+                Mobile Money (Wave, Orange, Moov, MTN)
+            </p>
+        @endif
     </div>
 
     <div class="footer-blue">

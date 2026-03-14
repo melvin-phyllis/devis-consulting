@@ -154,8 +154,8 @@
         <div class="section-title">👤 Informations du Client</div>
 
         <div class="toggle-section">
-            <button type="button" class="toggle-btn active" onclick="toggleClientMode('new')">+ Nouveau Client</button>
-            <button type="button" class="toggle-btn" onclick="toggleClientMode('existing')">📋 Client existant</button>
+            <button type="button" class="toggle-btn active" onclick="toggleClientMode('new', event)">+ Nouveau Client</button>
+            <button type="button" class="toggle-btn" onclick="toggleClientMode('existing', event)">📋 Client existant</button>
         </div>
 
         <!-- Mode : Nouveau Client -->
@@ -205,6 +205,9 @@
                         <option value="{{ $client->id }}">{{ $client->raison_sociale }} ({{ $client->email }})</option>
                     @endforeach
                 </select>
+                @if($clients->isEmpty())
+                    <small style="color: #6b7280;">Aucun client enregistré. Utilisez « Nouveau Client » pour en créer un.</small>
+                @endif
             </div>
         </div>
     </div>
@@ -237,8 +240,8 @@
         <div class="section-title">🛒 Articles / Services</div>
 
         <div class="toggle-section">
-            <button type="button" class="toggle-btn active" onclick="toggleProductMode('new')">+ Saisie directe</button>
-            <button type="button" class="toggle-btn" onclick="toggleProductMode('existing')">📋 Depuis le catalogue</button>
+            <button type="button" class="toggle-btn active" onclick="toggleProductMode('new', event)">+ Saisie directe</button>
+            <button type="button" class="toggle-btn" onclick="toggleProductMode('existing', event)">📋 Depuis le catalogue</button>
         </div>
 
         <input type="hidden" name="product_mode" id="product_mode" value="new">
@@ -289,6 +292,9 @@
                                     </option>
                                 @endforeach
                             </select>
+                            @if($produits->isEmpty())
+                                <small style="color: #6b7280;">Aucun produit au catalogue. Utilisez « Saisie directe » pour ajouter des articles.</small>
+                            @endif
                         </div>
                         <div class="form-group">
                             <label>Quantité *</label>
@@ -329,28 +335,27 @@
     let productMode = 'new';
 
     // ---- Toggle Client Mode ----
-    function toggleClientMode(mode) {
+    function toggleClientMode(mode, ev) {
         document.getElementById('client_mode').value = mode;
         document.getElementById('client-new').classList.toggle('hidden', mode !== 'new');
         document.getElementById('client-existing').classList.toggle('hidden', mode !== 'existing');
 
-        // Update toggle buttons
-        document.querySelectorAll('.content-card:nth-child(1) .toggle-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        var card = document.querySelector('form .content-card');
+        if (card) card.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+        if (ev && ev.target) ev.target.classList.add('active');
     }
 
     // ---- Toggle Product Mode ----
-    function toggleProductMode(mode) {
+    function toggleProductMode(mode, ev) {
         productMode = mode;
         document.getElementById('product_mode').value = mode;
 
         document.querySelectorAll('.ligne-new').forEach(el => el.classList.toggle('hidden', mode !== 'new'));
         document.querySelectorAll('.ligne-existing').forEach(el => el.classList.toggle('hidden', mode !== 'existing'));
 
-        // Update toggle buttons
-        const section = document.querySelector('.content-card:nth-child(3)');
-        section.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        var cards = document.querySelectorAll('form .content-card');
+        if (cards.length >= 3) cards[2].querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
+        if (ev && ev.target) ev.target.classList.add('active');
 
         calculateTotals();
     }

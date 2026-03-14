@@ -6,7 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Document extends Model
 {
-    protected $fillable = ['user_id', 'type', 'numero', 'client_id', 'date_emission', 'objet', 'lieu', 'titre_document', 'taux_tva', 'statut', 'total_ht', 'total_tva', 'total_ttc'];
+    protected $fillable = ['user_id', 'type', 'numero', 'client_id', 'date_emission', 'objet', 'lieu', 'titre_document', 'taux_tva', 'statut', 'total_ht', 'total_tva', 'total_ttc', 'montant_paye'];
+
+    protected function casts(): array
+    {
+        return [
+            'montant_paye' => 'decimal:2',
+            'total_ttc' => 'decimal:2',
+        ];
+    }
 
     protected static function booted()
     {
@@ -55,6 +63,27 @@ class Document extends Model
     public function lignes()
     {
         return $this->hasMany(DocumentLigne::class);
+    }
+
+    public function paiements()
+    {
+        return $this->hasMany(Paiement::class)->orderBy('date_paiement', 'desc');
+    }
+
+    /** Montant restant à payer (total_ttc - montant_paye) */
+    public function getResteAPayerAttribute(): float
+    {
+        return max(0, (float) $this->total_ttc - (float) ($this->montant_paye ?? 0));
+    }
+
+    /** Statut de paiement : non payée | partiellement payée | soldée */
+    public function getStatutPaiementAttribute(): string
+    {
+        $paye = (float) ($this->montant_paye ?? 0);
+        $ttc = (float) $this->total_ttc;
+        if ($paye <= 0) return 'non payée';
+        if ($paye >= $ttc) return 'soldée';
+        return 'partiellement payée';
     }
 
     /**

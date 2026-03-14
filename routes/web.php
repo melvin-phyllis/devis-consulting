@@ -28,7 +28,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/factures', [DevisController::class, 'facturesIndex'])->name('factures.index');
     Route::get('/factures/export', [DevisController::class, 'exportFactures'])->name('factures.export');
     Route::get('/factures/{id}/download', [DevisController::class, 'download'])->name('factures.download');
-    
+    Route::post('/factures/{id}/paiements', [DevisController::class, 'enregistrerPaiement'])->name('factures.paiements.store');
+
     // Gestion des ressources métier
     Route::resource('clients', ClientController::class);
     Route::resource('produits', ProduitController::class);
