@@ -308,7 +308,7 @@ class DevisController extends Controller
                     $w = $canvas->get_width();
                     $h = $canvas->get_height();
                     $label = 'Page '.$pageNumber.' / '.$pageCount;
-                    $canvas->text($w - 115, $h - 22, $label, $font, $size);
+                    $canvas->text($w - 115, $h - 58, $label, $font, $size);
                 },
             ],
         ]);
