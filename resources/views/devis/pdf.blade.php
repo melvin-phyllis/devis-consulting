@@ -78,6 +78,13 @@
             display: table-header-group;
         }
 
+        /* Dernière ligne du tbody : bloc totaux + cachet (évite un saut de page entre 2 tableaux) */
+        .items-table .footer-merged-cell {
+            border: none !important;
+            padding: 12px 0 0 0 !important;
+            vertical-align: top;
+        }
+
         .text-right {
             text-align: right;
         }
@@ -134,12 +141,10 @@
             background-color: #e5e7eb;
         }
 
-        /* Pied de page bleu */
+        /* Pied de page bleu : flux normal (fixed cassait la pagination DomPDF) */
         .footer-blue {
-            position: fixed;
-            bottom: -1cm;
-            left: 0;
-            right: 0;
+            margin-top: 14px;
+            padding-top: 8px;
             text-align: center;
             color: #00acee;
             font-size: 9px;
@@ -221,110 +226,114 @@
                     <td class="text-right">{{ number_format($ligne->quantite * $ligne->prix_unitaire, 0, ',', ' ') }}</td>
                 </tr>
             @endforeach
+            {{-- Même tableau : évite le saut de page « vide » avant totaux/cachet (comportement DomPDF) --}}
+            <tr>
+                <td colspan="4" class="footer-merged-cell">
+                    <table class="footer-after-items" style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td class="footer-left-col">
+                                <div class="cachet-wrap">
+                                    @if(isset($settings) && $settings->cachet)
+                                        <img src="{{ storage_path('app/public/' . $settings->cachet) }}"
+                                            alt=""
+                                            style="max-width: 130px; max-height: 110px; width: auto; height: auto; opacity: 0.95;">
+                                    @endif
+                                </div>
+                                <div class="conditions-devis">
+                                    @if(isset($devis->type) && $devis->type === 'facture')
+                                        <p style="font-size: 10px; margin: 0 0 8px 0; line-height: 1.4;">
+                                            <strong>Modes de paiement acceptés :</strong><br>
+                                            Chèque, Virement bancaire, Mobile Money (Wave, Orange, Moov, MTN)
+                                        </p>
+                                        @if(isset($devis->paiements) && $devis->paiements->count() > 0)
+                                            <p style="font-size: 9px; margin: 0 0 4px 0; color:#555;"><strong>Paiements reçus :</strong></p>
+                                            <table style="font-size: 8px; width: 100%; border-collapse: collapse;">
+                                                <tr style="background: #f3f4f6;">
+                                                    <th style="border: 1px solid #ccc; padding: 2px 4px; text-align: left;">Date</th>
+                                                    <th style="border: 1px solid #ccc; padding: 2px 4px; text-align: right;">Montant</th>
+                                                    <th style="border: 1px solid #ccc; padding: 2px 4px;">Mode</th>
+                                                    <th style="border: 1px solid #ccc; padding: 2px 4px;">Réf.</th>
+                                                </tr>
+                                                @foreach($devis->paiements as $p)
+                                                <tr>
+                                                    <td style="border: 1px solid #ccc; padding: 2px 4px;">{{ $p->date_paiement->format('d/m/Y') }}</td>
+                                                    <td style="border: 1px solid #ccc; padding: 2px 4px; text-align: right;">{{ number_format($p->montant, 0, ',', ' ') }} FCFA</td>
+                                                    <td style="border: 1px solid #ccc; padding: 2px 4px;">{{ $p->mode_paiement ?? '—' }}</td>
+                                                    <td style="border: 1px solid #ccc; padding: 2px 4px;">{{ $p->reference ?? '—' }}</td>
+                                                </tr>
+                                                @endforeach
+                                            </table>
+                                        @endif
+                                    @else
+                                        <p style="margin: 0 0 6px 0; font-size: 8px; color:#555;">Acompte 30% &nbsp;|&nbsp; Validité du devis : 3 mois</p>
+                                        <p style="font-size: 10px; margin: 0; line-height: 1.4;">
+                                            <strong>Modes de paiement :</strong><br>
+                                            Chèque, Virement bancaire<br>
+                                            Mobile Money (Wave, Orange, Moov, MTN)
+                                        </p>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="footer-right-col">
+                                <table class="total-table">
+                                    <tr>
+                                        <td style="width: 40%;">TOTAL HT</td>
+                                        <td class="text-right">{{ number_format($devis->total_ht, 0, ',', ' ') }}</td>
+                                    </tr>
+                                    @php
+                                        $tvaPctPdf = (float) ($devis->taux_tva ?? 0);
+                                        $tvaLibellePdf = 'TVA (' . ($tvaPctPdf <= 0 ? '0' : (abs($tvaPctPdf - round($tvaPctPdf)) < 0.001 ? (string) (int) round($tvaPctPdf) : number_format($tvaPctPdf, 2, ',', ' '))) . ' %)';
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $tvaLibellePdf }}</td>
+                                        <td class="text-right">{{ number_format($devis->total_tva, 0, ',', ' ') }}</td>
+                                    </tr>
+                                    <tr class="row-highlight">
+                                        <td>TOTAL TTC</td>
+                                        <td class="text-right">{{ number_format($devis->total_ttc, 0, ',', ' ') }}</td>
+                                    </tr>
+                                    @if(isset($devis->type) && $devis->type === 'facture')
+                                    @php
+                                        $paye = (float) ($devis->montant_paye ?? 0);
+                                        $reste = max(0, (float) $devis->total_ttc - $paye);
+                                    @endphp
+                                    <tr>
+                                        <td>DÉJÀ PAYÉ</td>
+                                        <td class="text-right">{{ number_format($paye, 0, ',', ' ') }} FCFA</td>
+                                    </tr>
+                                    <tr class="row-highlight">
+                                        <td>RESTE DÛ</td>
+                                        <td class="text-right">
+                                            @if($reste <= 0)
+                                                0 FCFA (Soldée)
+                                            @else
+                                                {{ number_format($reste, 0, ',', ' ') }} FCFA
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    @endif
+                                    <tr>
+                                        <td colspan="2" style="font-size: 9px; font-style: italic; padding-top: 8px; border: none;">
+                                            @if(isset($devis->type) && $devis->type === 'facture')
+                                                @php $resteLettres = \App\Models\Document::francsEntiersPourLettres($devis->reste_a_payer); @endphp
+                                                <strong>Reste dû en lettres :</strong>
+                                                @if($resteLettres <= 0)
+                                                    Zéro franc CFA (facture soldée).
+                                                @else
+                                                    {{ ucfirst(\App\Models\Document::nombreEnLettres($resteLettres)) }} francs CFA
+                                                @endif
+                                            @else
+                                                <strong>Montant en lettres :</strong> {{ ucfirst($devis->montant_en_lettres) }}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
         </tbody>
-    </table>
-
-    <table class="footer-after-items">
-        <tr>
-            <td class="footer-left-col">
-                <div class="cachet-wrap">
-                    @if(isset($settings) && $settings->cachet)
-                        <img src="{{ storage_path('app/public/' . $settings->cachet) }}"
-                            alt="Cachet"
-                            style="max-width: 150px; max-height: 140px; width: auto; height: auto; opacity: 0.95;">
-                    @endif
-                </div>
-                <div class="conditions-devis">
-                    @if(isset($devis->type) && $devis->type === 'facture')
-                        <p style="font-size: 10px; margin: 0 0 8px 0; line-height: 1.4;">
-                            <strong>Modes de paiement acceptés :</strong><br>
-                            Chèque, Virement bancaire, Mobile Money (Wave, Orange, Moov, MTN)
-                        </p>
-                        @if(isset($devis->paiements) && $devis->paiements->count() > 0)
-                            <p style="font-size: 9px; margin: 0 0 4px 0; color:#555;"><strong>Paiements reçus :</strong></p>
-                            <table style="font-size: 8px; width: 100%; border-collapse: collapse;">
-                                <tr style="background: #f3f4f6;">
-                                    <th style="border: 1px solid #ccc; padding: 2px 4px; text-align: left;">Date</th>
-                                    <th style="border: 1px solid #ccc; padding: 2px 4px; text-align: right;">Montant</th>
-                                    <th style="border: 1px solid #ccc; padding: 2px 4px;">Mode</th>
-                                    <th style="border: 1px solid #ccc; padding: 2px 4px;">Réf.</th>
-                                </tr>
-                                @foreach($devis->paiements as $p)
-                                <tr>
-                                    <td style="border: 1px solid #ccc; padding: 2px 4px;">{{ $p->date_paiement->format('d/m/Y') }}</td>
-                                    <td style="border: 1px solid #ccc; padding: 2px 4px; text-align: right;">{{ number_format($p->montant, 0, ',', ' ') }} FCFA</td>
-                                    <td style="border: 1px solid #ccc; padding: 2px 4px;">{{ $p->mode_paiement ?? '—' }}</td>
-                                    <td style="border: 1px solid #ccc; padding: 2px 4px;">{{ $p->reference ?? '—' }}</td>
-                                </tr>
-                                @endforeach
-                            </table>
-                        @endif
-                    @else
-                        <p style="margin: 0 0 6px 0; font-size: 8px; color:#555;">Acompte 30% &nbsp;|&nbsp; Validité du devis : 3 mois</p>
-                        <p style="font-size: 10px; margin: 0; line-height: 1.4;">
-                            <strong>Modes de paiement :</strong><br>
-                            Chèque, Virement bancaire<br>
-                            Mobile Money (Wave, Orange, Moov, MTN)
-                        </p>
-                    @endif
-                </div>
-            </td>
-            <td class="footer-right-col">
-                <table class="total-table">
-                    <tr>
-                        <td style="width: 40%;">TOTAL HT</td>
-                        <td class="text-right">{{ number_format($devis->total_ht, 0, ',', ' ') }}</td>
-                    </tr>
-                    @php
-                        $tvaPctPdf = (float) ($devis->taux_tva ?? 0);
-                        $tvaLibellePdf = 'TVA (' . ($tvaPctPdf <= 0 ? '0' : (abs($tvaPctPdf - round($tvaPctPdf)) < 0.001 ? (string) (int) round($tvaPctPdf) : number_format($tvaPctPdf, 2, ',', ' '))) . ' %)';
-                    @endphp
-                    <tr>
-                        <td>{{ $tvaLibellePdf }}</td>
-                        <td class="text-right">{{ number_format($devis->total_tva, 0, ',', ' ') }}</td>
-                    </tr>
-                    <tr class="row-highlight">
-                        <td>TOTAL TTC</td>
-                        <td class="text-right">{{ number_format($devis->total_ttc, 0, ',', ' ') }}</td>
-                    </tr>
-                    @if(isset($devis->type) && $devis->type === 'facture')
-                    @php
-                        $paye = (float) ($devis->montant_paye ?? 0);
-                        $reste = max(0, (float) $devis->total_ttc - $paye);
-                    @endphp
-                    <tr>
-                        <td>DÉJÀ PAYÉ</td>
-                        <td class="text-right">{{ number_format($paye, 0, ',', ' ') }} FCFA</td>
-                    </tr>
-                    <tr class="row-highlight">
-                        <td>RESTE DÛ</td>
-                        <td class="text-right">
-                            @if($reste <= 0)
-                                0 FCFA (Soldée)
-                            @else
-                                {{ number_format($reste, 0, ',', ' ') }} FCFA
-                            @endif
-                        </td>
-                    </tr>
-                    @endif
-                    <tr>
-                        <td colspan="2" style="font-size: 9px; font-style: italic; padding-top: 8px; border: none;">
-                            @if(isset($devis->type) && $devis->type === 'facture')
-                                @php $resteLettres = \App\Models\Document::francsEntiersPourLettres($devis->reste_a_payer); @endphp
-                                <strong>Reste dû en lettres :</strong>
-                                @if($resteLettres <= 0)
-                                    Zéro franc CFA (facture soldée).
-                                @else
-                                    {{ ucfirst(\App\Models\Document::nombreEnLettres($resteLettres)) }} francs CFA
-                                @endif
-                            @else
-                                <strong>Montant en lettres :</strong> {{ ucfirst($devis->montant_en_lettres) }}
-                            @endif
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
     </table>
 
     <div class="footer-blue">

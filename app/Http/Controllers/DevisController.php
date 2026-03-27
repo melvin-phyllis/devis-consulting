@@ -294,17 +294,24 @@ class DevisController extends Controller
         $settings = \App\Models\Setting::first();
         $pdf = Pdf::loadView('devis.pdf', compact('devis', 'settings'));
 
-        $pdf->getDomPDF()->getCanvas()->page_script(function (int $pageNumber, int $pageCount, $canvas, $fontMetrics) {
-            if ($pageCount <= 1) {
-                return;
-            }
-            $font = $fontMetrics->get_font('DejaVu Sans', 'normal');
-            $size = 9;
-            $w = $canvas->get_width();
-            $h = $canvas->get_height();
-            $label = 'Page '.$pageNumber.' / '.$pageCount;
-            $canvas->text($w - 115, $h - 22, $label, $font, $size);
-        });
+        // Après reflow(), Dompdf appelle ces callbacks puis page_script : _pages est alors rempli.
+        // Un appel direct à page_script() avant render() ne dessine rien (tableau de pages vide).
+        $pdf->getDomPDF()->setCallbacks([
+            [
+                'event' => 'end_document',
+                'f' => function (int $pageNumber, int $pageCount, $canvas, $fontMetrics) {
+                    if ($pageCount <= 1) {
+                        return;
+                    }
+                    $font = $fontMetrics->get_font('DejaVu Sans', 'normal');
+                    $size = 9;
+                    $w = $canvas->get_width();
+                    $h = $canvas->get_height();
+                    $label = 'Page '.$pageNumber.' / '.$pageCount;
+                    $canvas->text($w - 115, $h - 22, $label, $font, $size);
+                },
+            ],
+        ]);
 
         return $pdf->download('Devis_'.$devis->numero.'.pdf');
     }
