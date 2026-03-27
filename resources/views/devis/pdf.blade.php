@@ -130,11 +130,12 @@
             max-width: 320px;
             margin-left: auto;
             border-collapse: collapse;
+            border: 1.5px solid #000;
         }
 
         .total-table td {
             border: none;
-            padding: 4px 0;
+            padding: 4px 8px;
             font-weight: bold;
         }
 
@@ -143,8 +144,8 @@
             padding: 6px 8px;
         }
 
-        .total-table tr:not(.row-highlight) td {
-            border-bottom: 1px solid #e5e7eb;
+        .total-table tr:not(.row-highlight):not(:last-child) td {
+            border-bottom: 1px solid #ccc;
         }
 
         .total-table tr:last-child td {
