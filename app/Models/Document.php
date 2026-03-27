@@ -11,6 +11,7 @@ class Document extends Model
     protected function casts(): array
     {
         return [
+            'date_emission' => 'date',
             'montant_paye' => 'decimal:2',
             'total_ttc' => 'decimal:2',
         ];

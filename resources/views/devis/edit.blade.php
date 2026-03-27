@@ -33,7 +33,11 @@
             </div>
             <div class="form-group">
                 <label>Date d'émission</label>
-                <input type="date" name="date_emission" value="{{ $devis->date_emission }}" required>
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <input type="date" name="date_emission" id="date_emission" value="{{ old('date_emission', \Carbon\Carbon::parse($devis->date_emission)->format('Y-m-d')) }}" required style="flex: 1; min-width: 160px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('date_emission').value = new Date().toISOString().slice(0,10)">Aujourd'hui</button>
+                </div>
+                <small style="color: #6b7280; display: block; margin-top: 4px;">Cette date figure sur le PDF. « Créé le » reste la date d’enregistrement initial.</small>
             </div>
         </div>
 

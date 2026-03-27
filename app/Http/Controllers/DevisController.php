@@ -375,10 +375,10 @@ class DevisController extends Controller
             $total_tva = $total_ht * $taux_tva;
             $total_ttc = $total_ht + $total_tva;
 
-            // Mise à jour du document
+            // Mise à jour du document (date_emission normalisée en Y-m-d pour MySQL)
             $devis->update([
                 'client_id' => $request->client_id,
-                'date_emission' => $request->date_emission,
+                'date_emission' => \Carbon\Carbon::parse($request->date_emission)->startOfDay(),
                 'objet' => $request->objet,
                 'lieu' => $request->lieu,
                 'titre_document' => $request->titre_document,

@@ -104,6 +104,7 @@
                 <h3>📄 Détails du Devis</h3>
                 <div class="info-row"><span class="info-label">Date d'émission</span> <span class="info-value">{{ \Carbon\Carbon::parse($devis->date_emission)->format('d/m/Y') }}</span></div>
                 <div class="info-row"><span class="info-label">Créé le</span> <span class="info-value">{{ $devis->created_at->format('d/m/Y H:i') }}</span></div>
+                <div class="info-row"><span class="info-label">Dernière modification</span> <span class="info-value">{{ $devis->updated_at->format('d/m/Y H:i') }}</span></div>
             </div>
         </div>
 
