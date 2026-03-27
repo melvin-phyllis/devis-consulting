@@ -90,7 +90,6 @@
         .footer-summary {
             width: 100%;
             margin-top: 18px;
-            page-break-inside: avoid;
         }
 
         .footer-after-items {
