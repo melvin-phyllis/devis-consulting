@@ -151,13 +151,13 @@
             border-bottom: none !important;
         }
 
-        /* Pied de page bleu (légal) — fixé en bas de page */
+        /* Pied de page bleu (légal) — fixé tout en bas de la page */
         .footer-blue {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 8px 1.6cm 0 1.6cm;
+            bottom: -1.6cm;
+            left: -1.6cm;
+            right: -1.6cm;
+            padding: 6px 1.6cm 4px 1.6cm;
             text-align: center;
             color: #00acee;
             font-size: 9px;
