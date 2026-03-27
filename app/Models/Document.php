@@ -89,12 +89,20 @@ class Document extends Model
     }
 
     /**
+     * Francs entiers pour l’affichage en lettres (aligné sur number_format, évite 2,999… → 2 avec un simple cast).
+     */
+    public static function francsEntiersPourLettres(float|string|null $montant): int
+    {
+        return (int) round((float) $montant);
+    }
+
+    /**
      * Convertit le montant TTC en lettres (français)
      * @return string
      */
     public function getMontantEnLettresAttribute(): string
     {
-        return self::nombreEnLettres((int) $this->total_ttc) . ' francs CFA';
+        return self::nombreEnLettres(self::francsEntiersPourLettres($this->total_ttc)) . ' francs CFA';
     }
 
     /**

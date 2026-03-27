@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <style>
         @page {
-            margin: 2cm;
+            margin: 1.6cm;
         }
 
         body {
@@ -13,7 +13,7 @@
             font-size: 11px;
             color: #1a2a5a;
             margin: 0;
-            padding: 0 0 1.4cm 0;
+            padding: 0 0 1.1cm 0;
         }
 
         /* Entête */
@@ -45,9 +45,9 @@
         .title-box {
             border: 3px solid #1a2a5a;
             text-align: center;
-            padding: 10px;
+            padding: 8px;
             width: 50%;
-            margin: 20px auto;
+            margin: 12px auto;
             font-size: 16px;
             font-weight: bold;
             text-transform: uppercase;
@@ -57,20 +57,20 @@
         .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 6px;
         }
 
         .items-table th {
             background-color: #a9a9a9;
             border: 1.5px solid #000;
-            padding: 5px;
+            padding: 4px 5px;
             text-transform: uppercase;
             font-size: 10px;
         }
 
         .items-table td {
             border: 1.5px solid #000;
-            padding: 5px;
+            padding: 3px 5px;
             color: #000;
         }
 
@@ -86,12 +86,13 @@
             text-align: center;
         }
 
-        /* Totaux et Signature : flux normal (pas de float/absolu) pour DomPDF */
+        /* Totaux et Signature : flux normal (pas de float/absolu) pour DomPDF.
+           Ne pas mettre page-break-inside: avoid ici : DomPDF rejette alors tout le bloc
+           sur la page suivante et laisse un grand vide sur la page précédente. */
         .footer-after-items {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 24px;
-            page-break-inside: avoid;
+            margin-top: 16px;
         }
 
         .footer-after-items td {
@@ -309,7 +310,7 @@
                     <tr>
                         <td colspan="2" style="font-size: 9px; font-style: italic; padding-top: 8px; border: none;">
                             @if(isset($devis->type) && $devis->type === 'facture')
-                                @php $resteLettres = (int) $devis->reste_a_payer; @endphp
+                                @php $resteLettres = \App\Models\Document::francsEntiersPourLettres($devis->reste_a_payer); @endphp
                                 <strong>Reste dû en lettres :</strong>
                                 @if($resteLettres <= 0)
                                     Zéro franc CFA (facture soldée).
