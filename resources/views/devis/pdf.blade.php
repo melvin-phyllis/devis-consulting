@@ -13,7 +13,7 @@
             font-size: 11px;
             color: #1a2a5a;
             margin: 0;
-            padding: 0 0 1.1cm 0;
+            padding: 0 0 2cm 0;
         }
 
         /* Entête */
@@ -151,14 +151,18 @@
             border-bottom: none !important;
         }
 
-        /* Pied de page bleu (légal) — sous le bloc totaux/cachet */
+        /* Pied de page bleu (légal) — fixé en bas de page */
         .footer-blue {
-            margin-top: 16px;
-            padding-top: 10px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px 1.6cm 0 1.6cm;
             text-align: center;
             color: #00acee;
             font-size: 9px;
             line-height: 1.2;
+            border-top: 1px solid #00acee;
         }
     </style>
 </head>
@@ -247,7 +251,7 @@
                         @if(isset($settings) && $settings->cachet)
                             <img src="{{ storage_path('app/public/' . $settings->cachet) }}"
                                 alt=""
-                                style="max-width: {{ $devis->lignes->count() <= 11 ? 75 : 95 }}px; max-height: {{ $devis->lignes->count() <= 11 ? 60 : 80 }}px; width: auto; height: auto; opacity: 0.95;">
+                                style="max-width: 130px; max-height: 110px; width: auto; height: auto; opacity: 0.95;">
                         @endif
                     </div>
                     <div class="conditions-devis">
@@ -286,27 +290,31 @@
                     </div>
                 </td>
                 <td class="footer-right-col">
+                    @php
+                        $totalHtReel = $devis->lignes->sum(fn($l) => $l->quantite * $l->prix_unitaire);
+                        $tvaPctPdf = (float) ($devis->taux_tva ?? 0);
+                        $tvaDecimalPdf = $tvaPctPdf / 100;
+                        $totalTvaReel = $totalHtReel * $tvaDecimalPdf;
+                        $totalTtcReel = $totalHtReel + $totalTvaReel;
+                        $tvaLibellePdf = 'TVA (' . ($tvaPctPdf <= 0 ? '0' : (abs($tvaPctPdf - round($tvaPctPdf)) < 0.001 ? (string) (int) round($tvaPctPdf) : number_format($tvaPctPdf, 2, ',', ' '))) . ' %)';
+                    @endphp
                     <table class="total-table">
                         <tr>
                             <td style="width: 45%;">TOTAL HT</td>
-                            <td class="text-right">{{ number_format($devis->total_ht, 0, ',', ' ') }}</td>
+                            <td class="text-right">{{ number_format($totalHtReel, 0, ',', ' ') }}</td>
                         </tr>
-                        @php
-                            $tvaPctPdf = (float) ($devis->taux_tva ?? 0);
-                            $tvaLibellePdf = 'TVA (' . ($tvaPctPdf <= 0 ? '0' : (abs($tvaPctPdf - round($tvaPctPdf)) < 0.001 ? (string) (int) round($tvaPctPdf) : number_format($tvaPctPdf, 2, ',', ' '))) . ' %)';
-                        @endphp
                         <tr>
                             <td>{{ $tvaLibellePdf }}</td>
-                            <td class="text-right">{{ number_format($devis->total_tva, 0, ',', ' ') }}</td>
+                            <td class="text-right">{{ number_format($totalTvaReel, 0, ',', ' ') }}</td>
                         </tr>
                         <tr class="row-highlight">
                             <td>TOTAL TTC</td>
-                            <td class="text-right">{{ number_format($devis->total_ttc, 0, ',', ' ') }}</td>
+                            <td class="text-right">{{ number_format($totalTtcReel, 0, ',', ' ') }}</td>
                         </tr>
                         @if(isset($devis->type) && $devis->type === 'facture')
                         @php
                             $paye = (float) ($devis->montant_paye ?? 0);
-                            $reste = max(0, (float) $devis->total_ttc - $paye);
+                            $reste = max(0, $totalTtcReel - $paye);
                         @endphp
                         <tr>
                             <td>DÉJÀ PAYÉ</td>
@@ -326,15 +334,16 @@
                         <tr>
                             <td colspan="2" style="font-size: 9px; font-style: italic; padding-top: 10px; border: none !important;">
                                 @if(isset($devis->type) && $devis->type === 'facture')
-                                    @php $resteLettres = \App\Models\Document::francsEntiersPourLettres($devis->reste_a_payer); @endphp
+                                    @php $resteLettresPdf = \App\Models\Document::francsEntiersPourLettres($reste); @endphp
                                     <strong>Reste dû en lettres :</strong>
-                                    @if($resteLettres <= 0)
+                                    @if($resteLettresPdf <= 0)
                                         Zéro franc CFA (facture soldée).
                                     @else
-                                        {{ ucfirst(\App\Models\Document::nombreEnLettres($resteLettres)) }} francs CFA
+                                        {{ ucfirst(\App\Models\Document::nombreEnLettres($resteLettresPdf)) }} francs CFA
                                     @endif
                                 @else
-                                    <strong>Montant en lettres :</strong> {{ ucfirst($devis->montant_en_lettres) }}
+                                    @php $ttcEntiersPdf = \App\Models\Document::francsEntiersPourLettres($totalTtcReel); @endphp
+                                    <strong>Montant en lettres :</strong> {{ ucfirst(\App\Models\Document::nombreEnLettres($ttcEntiersPdf)) }} francs CFA
                                 @endif
                             </td>
                         </tr>
