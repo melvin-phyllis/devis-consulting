@@ -131,6 +131,10 @@
             </tbody>
         </table>
 
+        @php
+            $tvaPctShow = (float) ($devis->taux_tva ?? 0);
+            $tvaLibelle = 'TVA (' . ($tvaPctShow <= 0 ? '0' : (abs($tvaPctShow - round($tvaPctShow)) < 0.001 ? (string) (int) round($tvaPctShow) : number_format($tvaPctShow, 2, ',', ' '))) . ' %)';
+        @endphp
         <!-- Totaux -->
         <div class="totals-section">
             <div class="totals-box">
@@ -139,7 +143,7 @@
                     <span>{{ number_format($devis->total_ht, 0, ',', ' ') }} FCFA</span>
                 </div>
                 <div class="total-row">
-                    <span>TVA (18%)</span>
+                    <span>{{ $tvaLibelle }}</span>
                     <span>{{ number_format($devis->total_tva, 0, ',', ' ') }} FCFA</span>
                 </div>
                 <div class="total-row final">

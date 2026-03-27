@@ -233,6 +233,17 @@
                 <option value="FACTURE">FACTURE</option>
             </select>
         </div>
+        <div class="form-group">
+            <label>Taux de TVA</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                <input type="number" name="taux_tva_percent" id="taux_tva_percent" value="18" min="0" max="100" step="0.01"
+                       class="form-control" style="width: 120px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 10px;" oninput="calculateTotals()">
+                <span style="font-weight: 600;">%</span>
+                <button type="button" class="toggle-btn" id="btn-tva-0" style="padding: 8px 14px;" onclick="setTva(0)">Sans TVA (0 %)</button>
+                <button type="button" class="toggle-btn active" id="btn-tva-18" style="padding: 8px 14px;" onclick="setTva(18)">18 %</button>
+            </div>
+            <small style="color: #6b7280;">0 % = pas de TVA sur le devis. Sinon saisissez le pourcentage (ex. 18).</small>
+        </div>
     </div>
 
     <!-- ============ SECTION 3 : PRODUITS ============ -->
@@ -316,7 +327,7 @@
         <!-- Totaux -->
         <div class="totals">
             <p>Total HT : <strong><span id="display-ht">0</span> FCFA</strong></p>
-            <p>TVA (18%) : <strong><span id="display-tva">0</span> FCFA</strong></p>
+            <p><span id="tva-label">TVA</span> : <strong><span id="display-tva">0</span> FCFA</strong></p>
             <p class="total-ttc">Total TTC : <span id="display-ttc">0</span> FCFA</p>
         </div>
     </div>
@@ -419,6 +430,21 @@
     }
 
     // ---- Calculate totals ----
+    function getTvaRate() {
+        const el = document.getElementById('taux_tva_percent');
+        let p = parseFloat(el?.value);
+        if (isNaN(p) || p < 0) p = 0;
+        if (p > 100) p = 100;
+        return p / 100;
+    }
+
+    function setTva(percent) {
+        document.getElementById('taux_tva_percent').value = percent;
+        document.getElementById('btn-tva-0')?.classList.toggle('active', percent === 0);
+        document.getElementById('btn-tva-18')?.classList.toggle('active', percent === 18);
+        calculateTotals();
+    }
+
     function calculateTotals() {
         let totalHT = 0;
 
@@ -436,9 +462,13 @@
             totalHT += qty * price;
         });
 
-        const tva = totalHT * 0.18;
+        const rate = getTvaRate();
+        const pNum = Math.round(rate * 10000) / 100;
+        const pct = pNum <= 0 ? '0' : new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(pNum);
+        const tva = totalHT * rate;
         const ttc = totalHT + tva;
 
+        document.getElementById('tva-label').innerText = 'TVA (' + pct + ' %)';
         document.getElementById('display-ht').innerText = new Intl.NumberFormat('fr-FR').format(totalHT);
         document.getElementById('display-tva').innerText = new Intl.NumberFormat('fr-FR').format(tva);
         document.getElementById('display-ttc').innerText = new Intl.NumberFormat('fr-FR').format(ttc);

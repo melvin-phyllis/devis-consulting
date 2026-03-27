@@ -200,8 +200,12 @@ class DevisController extends Controller
                 return back()->with('error', 'Veuillez ajouter au moins un article avec une désignation et un prix.');
             }
 
-            $taux_tva = 0.18;
-            $total_tva = $total_ht * $taux_tva;
+            $request->validate([
+                'taux_tva_percent' => 'required|numeric|min:0|max:100',
+            ]);
+            $tauxPct = max(0, min(100, (float) $request->taux_tva_percent));
+            $taux_decimal = $tauxPct / 100;
+            $total_tva = $total_ht * $taux_decimal;
             $total_ttc = $total_ht + $total_tva;
 
             // ---- 3. Créer le document Devis ----
@@ -212,7 +216,7 @@ class DevisController extends Controller
                 'date_emission' => $request->date_emission,
                 'objet' => $request->objet,
                 'titre_document' => $request->titre_document,
-                'taux_tva' => 18,
+                'taux_tva' => $tauxPct,
                 'statut' => 'Brouillon',
                 'total_ht' => $total_ht,
                 'total_tva' => $total_tva,
@@ -354,6 +358,7 @@ class DevisController extends Controller
                 }),
             ],
             'date_emission' => 'required|date',
+            'taux_tva_percent' => 'required|numeric|min:0|max:100',
             'lignes' => 'required|array|min:1',
             'lignes.*.produit_id' => 'required',
             'lignes.*.quantite' => 'required|numeric|min:1',
@@ -371,8 +376,9 @@ class DevisController extends Controller
                 $total_ht += $ligne['quantite'] * $ligne['prix_unitaire'];
             }
 
-            $taux_tva = 0.18;
-            $total_tva = $total_ht * $taux_tva;
+            $tauxPct = max(0, min(100, (float) $request->taux_tva_percent));
+            $taux_decimal = $tauxPct / 100;
+            $total_tva = $total_ht * $taux_decimal;
             $total_ttc = $total_ht + $total_tva;
 
             // Mise à jour du document (date_emission normalisée en Y-m-d pour MySQL)
@@ -382,6 +388,7 @@ class DevisController extends Controller
                 'objet' => $request->objet,
                 'lieu' => $request->lieu,
                 'titre_document' => $request->titre_document,
+                'taux_tva' => $tauxPct,
                 'total_ht' => $total_ht,
                 'total_tva' => $total_tva,
                 'total_ttc' => $total_ttc,

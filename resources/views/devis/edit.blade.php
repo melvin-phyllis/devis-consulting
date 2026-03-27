@@ -7,6 +7,7 @@
     .totals { margin-top: 30px; background: linear-gradient(135deg, #f9fafb, #f3f4f6); padding: 20px; border-radius: 14px; text-align: right; border: 2px solid #e5e7eb; }
     .totals p { margin: 5px 0; font-size: 1em; color: #374151; }
     .total-ttc { color: #4f46e5 !important; font-size: 1.3em !important; font-weight: 700; }
+    #btn-tva-0.active, #btn-tva-18.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
 </style>
 @endsection
 
@@ -56,6 +57,18 @@
             </select>
         </div>
 
+        <div class="form-group" style="margin-bottom: 24px;">
+            <label>Taux de TVA</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                <input type="number" name="taux_tva_percent" id="taux_tva_percent" value="{{ old('taux_tva_percent', number_format((float) $devis->taux_tva, 2, '.', '')) }}" min="0" max="100" step="0.01"
+                       style="width: 120px; padding: 10px 12px; border: 2px solid #e5e7eb; border-radius: 10px;" oninput="calculateTotals()">
+                <span style="font-weight: 600;">%</span>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-tva-0" onclick="setTva(0)">Sans TVA (0 %)</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-tva-18" onclick="setTva(18)">18 %</button>
+            </div>
+            <small style="color: #6b7280;">0 % = pas de TVA. Ajustez le pourcentage si besoin.</small>
+        </div>
+
         <h3 style="color: #1e1b4b; margin-bottom: 12px;">🛒 Articles / Services</h3>
         <button type="button" class="btn btn-success" onclick="addLine()" style="margin-bottom: 12px;">+ Ajouter un produit</button>
 
@@ -92,7 +105,7 @@
 
         <div class="totals">
             <p>Total HT : <strong><span id="display-ht">{{ number_format($devis->total_ht, 0, ',', ' ') }}</span> FCFA</strong></p>
-            <p>TVA (18%) : <strong><span id="display-tva">{{ number_format($devis->total_tva, 0, ',', ' ') }}</span> FCFA</strong></p>
+            <p><span id="tva-label">TVA</span> : <strong><span id="display-tva">{{ number_format($devis->total_tva, 0, ',', ' ') }}</span> FCFA</strong></p>
             <p class="total-ttc">Total TTC : <span id="display-ttc">{{ number_format($devis->total_ttc, 0, ',', ' ') }}</span> FCFA</p>
         </div>
 
@@ -130,6 +143,21 @@
         calculateTotals();
     }
 
+    function getTvaRate() {
+        const el = document.getElementById('taux_tva_percent');
+        let p = parseFloat(el?.value);
+        if (isNaN(p) || p < 0) p = 0;
+        if (p > 100) p = 100;
+        return p / 100;
+    }
+
+    function setTva(percent) {
+        document.getElementById('taux_tva_percent').value = percent;
+        document.getElementById('btn-tva-0')?.classList.toggle('active', percent === 0);
+        document.getElementById('btn-tva-18')?.classList.toggle('active', percent === 18);
+        calculateTotals();
+    }
+
     function calculateTotals() {
         let totalHT = 0;
         document.querySelectorAll('#lignes-body tr').forEach(row => {
@@ -137,15 +165,28 @@
             const price = parseFloat(row.querySelector('.price-input').value) || 0;
             totalHT += qty * price;
         });
-        const tva = totalHT * 0.18, ttc = totalHT + tva;
-        document.getElementById('display-ht').innerText = new Intl.NumberFormat().format(totalHT);
-        document.getElementById('display-tva').innerText = new Intl.NumberFormat().format(tva);
-        document.getElementById('display-ttc').innerText = new Intl.NumberFormat().format(ttc);
+        const rate = getTvaRate();
+        const pNum = Math.round(rate * 10000) / 100;
+        const pct = pNum <= 0 ? '0' : new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(pNum);
+        const tva = totalHT * rate;
+        const ttc = totalHT + tva;
+        document.getElementById('tva-label').innerText = 'TVA (' + pct + ' %)';
+        document.getElementById('display-ht').innerText = new Intl.NumberFormat('fr-FR').format(totalHT);
+        document.getElementById('display-tva').innerText = new Intl.NumberFormat('fr-FR').format(tva);
+        document.getElementById('display-ttc').innerText = new Intl.NumberFormat('fr-FR').format(ttc);
     }
 
     function attachListeners() {
         document.querySelectorAll('.qty-input, .price-input').forEach(input => input.addEventListener('input', calculateTotals));
     }
     attachListeners();
+
+    (function initTvaUi() {
+        const raw = parseFloat(document.getElementById('taux_tva_percent').value);
+        const p = isNaN(raw) ? 0 : raw;
+        document.getElementById('btn-tva-0')?.classList.toggle('active', p === 0);
+        document.getElementById('btn-tva-18')?.classList.toggle('active', Math.abs(p - 18) < 0.001);
+        calculateTotals();
+    })();
 </script>
 @endsection

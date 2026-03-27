@@ -207,8 +207,12 @@
                 <td style="width: 40%;">TOTAL HT</td>
                 <td class="text-right">{{ number_format($devis->total_ht, 0, ',', ' ') }}</td>
             </tr>
+            @php
+                $tvaPctPdf = (float) ($devis->taux_tva ?? 0);
+                $tvaLibellePdf = 'TVA (' . ($tvaPctPdf <= 0 ? '0' : (abs($tvaPctPdf - round($tvaPctPdf)) < 0.001 ? (string) (int) round($tvaPctPdf) : number_format($tvaPctPdf, 2, ',', ' '))) . ' %)';
+            @endphp
             <tr>
-                <td>TVA (18%)</td>
+                <td>{{ $tvaLibellePdf }}</td>
                 <td class="text-right">{{ number_format($devis->total_tva, 0, ',', ' ') }}</td>
             </tr>
             <tr class="row-highlight">

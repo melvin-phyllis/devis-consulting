@@ -12,6 +12,7 @@ class Document extends Model
     {
         return [
             'date_emission' => 'date',
+            'taux_tva' => 'decimal:2',
             'montant_paye' => 'decimal:2',
             'total_ttc' => 'decimal:2',
         ];
