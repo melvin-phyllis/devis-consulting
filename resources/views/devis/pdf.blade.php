@@ -70,7 +70,7 @@
 
         .items-table td {
             border: 1.5px solid #000;
-            padding: 3px 5px;
+            padding: 2px 4px;
             color: #000;
         }
 
@@ -81,7 +81,7 @@
         /* Dernière ligne du tbody : bloc totaux + cachet (évite un saut de page entre 2 tableaux) */
         .items-table .footer-merged-cell {
             border: none !important;
-            padding: 12px 0 0 0 !important;
+            padding: 0 !important;
             vertical-align: top;
         }
 
@@ -99,7 +99,7 @@
         .footer-after-items {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 16px;
+            margin-top: 6px;
         }
 
         .footer-after-items td {
@@ -107,8 +107,8 @@
         }
 
         .footer-left-col {
-            width: 38%;
-            padding-right: 12px;
+            width: 40%;
+            padding-right: 8px;
         }
 
         .footer-right-col {
@@ -117,13 +117,13 @@
 
         .cachet-wrap {
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
         }
 
         .conditions-devis {
-            font-size: 9px;
+            font-size: 8px;
             color: #444;
-            line-height: 1.45;
+            line-height: 1.25;
         }
 
         .total-table {
@@ -133,7 +133,7 @@
 
         .total-table td {
             border: 1.5px solid #000;
-            padding: 5px;
+            padding: 3px 5px;
             font-weight: bold;
         }
 
@@ -236,37 +236,37 @@
                                     @if(isset($settings) && $settings->cachet)
                                         <img src="{{ storage_path('app/public/' . $settings->cachet) }}"
                                             alt=""
-                                            style="max-width: 130px; max-height: 110px; width: auto; height: auto; opacity: 0.95;">
+                                            style="max-width: {{ $devis->lignes->count() <= 11 ? 75 : 95 }}px; max-height: {{ $devis->lignes->count() <= 11 ? 60 : 80 }}px; width: auto; height: auto; opacity: 0.95;">
                                     @endif
                                 </div>
                                 <div class="conditions-devis">
                                     @if(isset($devis->type) && $devis->type === 'facture')
-                                        <p style="font-size: 10px; margin: 0 0 8px 0; line-height: 1.4;">
+                                        <p style="font-size: 9px; margin: 0 0 6px 0; line-height: 1.2;">
                                             <strong>Modes de paiement acceptés :</strong><br>
                                             Chèque, Virement bancaire, Mobile Money (Wave, Orange, Moov, MTN)
                                         </p>
                                         @if(isset($devis->paiements) && $devis->paiements->count() > 0)
-                                            <p style="font-size: 9px; margin: 0 0 4px 0; color:#555;"><strong>Paiements reçus :</strong></p>
-                                            <table style="font-size: 8px; width: 100%; border-collapse: collapse;">
+                                            <p style="font-size: 8px; margin: 0 0 3px 0; color:#555;"><strong>Paiements reçus :</strong></p>
+                                            <table style="font-size: 7px; width: 100%; border-collapse: collapse;">
                                                 <tr style="background: #f3f4f6;">
-                                                    <th style="border: 1px solid #ccc; padding: 2px 4px; text-align: left;">Date</th>
-                                                    <th style="border: 1px solid #ccc; padding: 2px 4px; text-align: right;">Montant</th>
-                                                    <th style="border: 1px solid #ccc; padding: 2px 4px;">Mode</th>
-                                                    <th style="border: 1px solid #ccc; padding: 2px 4px;">Réf.</th>
+                                                    <th style="border: 1px solid #ccc; padding: 1px 3px; text-align: left;">Date</th>
+                                                    <th style="border: 1px solid #ccc; padding: 1px 3px; text-align: right;">Montant</th>
+                                                    <th style="border: 1px solid #ccc; padding: 1px 3px;">Mode</th>
+                                                    <th style="border: 1px solid #ccc; padding: 1px 3px;">Réf.</th>
                                                 </tr>
                                                 @foreach($devis->paiements as $p)
                                                 <tr>
-                                                    <td style="border: 1px solid #ccc; padding: 2px 4px;">{{ $p->date_paiement->format('d/m/Y') }}</td>
-                                                    <td style="border: 1px solid #ccc; padding: 2px 4px; text-align: right;">{{ number_format($p->montant, 0, ',', ' ') }} FCFA</td>
-                                                    <td style="border: 1px solid #ccc; padding: 2px 4px;">{{ $p->mode_paiement ?? '—' }}</td>
-                                                    <td style="border: 1px solid #ccc; padding: 2px 4px;">{{ $p->reference ?? '—' }}</td>
+                                                    <td style="border: 1px solid #ccc; padding: 1px 3px;">{{ $p->date_paiement->format('d/m/Y') }}</td>
+                                                    <td style="border: 1px solid #ccc; padding: 1px 3px; text-align: right;">{{ number_format($p->montant, 0, ',', ' ') }} FCFA</td>
+                                                    <td style="border: 1px solid #ccc; padding: 1px 3px;">{{ $p->mode_paiement ?? '—' }}</td>
+                                                    <td style="border: 1px solid #ccc; padding: 1px 3px;">{{ $p->reference ?? '—' }}</td>
                                                 </tr>
                                                 @endforeach
                                             </table>
                                         @endif
                                     @else
-                                        <p style="margin: 0 0 6px 0; font-size: 8px; color:#555;">Acompte 30% &nbsp;|&nbsp; Validité du devis : 3 mois</p>
-                                        <p style="font-size: 10px; margin: 0; line-height: 1.4;">
+                                        <p style="margin: 0 0 4px 0; font-size: 7px; color:#555;">Acompte 30% &nbsp;|&nbsp; Validité du devis : 3 mois</p>
+                                        <p style="font-size: 9px; margin: 0; line-height: 1.2;">
                                             <strong>Modes de paiement :</strong><br>
                                             Chèque, Virement bancaire<br>
                                             Mobile Money (Wave, Orange, Moov, MTN)
