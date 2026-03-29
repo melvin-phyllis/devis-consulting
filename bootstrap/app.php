@@ -11,7 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Prod HTTPS derrière proxy (Nginx, Cloudflare, cPanel, etc.) : sans cela,
+        // Laravel croit être en HTTP → cookies / CSRF incorrects → 419 « Page expirée » au login.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
