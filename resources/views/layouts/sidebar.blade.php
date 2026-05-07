@@ -88,22 +88,22 @@
         }
 
         .nav-section {
-            padding: 12px 20px 4px;
+            padding: 16px 20px 5px;
             font-size: 10px;
             font-weight: 600;
-            letter-spacing: 1px;
+            letter-spacing: 1.2px;
             text-transform: uppercase;
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.45);
         }
 
         .nav-link {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 20px 8px 28px;
+            padding: 9px 16px 9px 28px;
             text-decoration: none;
-            color: rgba(255, 255, 255, 0.65);
-            font-size: 13px;
+            color: rgba(255, 255, 255, 0.82);
+            font-size: 13.5px;
             font-weight: 400;
             transition: background 0.15s, color 0.15s;
             position: relative;
@@ -112,22 +112,23 @@
         .nav-link::after {
             content: '';
             position: absolute;
-            left: 18px;
+            left: 16px;
             top: 50%;
             transform: translateY(-50%);
-            width: 4px;
-            height: 4px;
+            width: 5px;
+            height: 5px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.25);
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .nav-link.active::after {
-            background: var(--purple);
+            background: #7c6bfe;
+            box-shadow: 0 0 6px rgba(124,107,254,0.8);
         }
 
         .nav-link-create {
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
         }
 
         .nav-link-create::after {
@@ -137,17 +138,18 @@
         .nav-link-create .nav-icon {
             display: inline;
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.6);
         }
 
         .nav-link:hover {
-            background: rgba(255, 255, 255, 0.06);
-            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.09);
+            color: #fff;
         }
 
         .nav-link.active {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.13);
             color: #fff;
+            font-weight: 500;
         }
 
         .nav-link.active::before {
@@ -157,7 +159,7 @@
             top: 4px;
             bottom: 4px;
             width: 3px;
-            background: var(--purple);
+            background: #7c6bfe;
             border-radius: 0 2px 2px 0;
         }
 
@@ -169,9 +171,9 @@
             margin-left: auto;
             font-size: 10px;
             font-weight: 500;
-            color: rgba(255, 255, 255, 0.35);
-            background: rgba(255, 255, 255, 0.08);
-            padding: 1px 6px;
+            color: rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.12);
+            padding: 1px 7px;
             border-radius: 10px;
         }
 
@@ -216,7 +218,7 @@
         }
 
         .user-name {
-            font-size: 12px;
+            font-size: 12.5px;
             font-weight: 500;
             color: rgba(255, 255, 255, 0.85);
             white-space: nowrap;
@@ -225,8 +227,8 @@
         }
 
         .user-role {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.35);
+            font-size: 10.5px;
+            color: rgba(255, 255, 255, 0.5);
             margin-top: 1px;
             white-space: nowrap;
             overflow: hidden;
@@ -241,10 +243,10 @@
             width: 100%;
             margin-top: 8px;
             padding: 7px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: 4px;
             background: transparent;
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.6);
             font-family: 'Inter', sans-serif;
             font-size: 12px;
             font-weight: 400;
@@ -781,6 +783,40 @@
         </div>
     </div>
 
+    {{-- Modal bienvenue (première connexion) --}}
+    <div class="modal-overlay" id="modal-welcome">
+        <div class="modal-box" style="max-width:480px;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="width:56px;height:56px;background:rgba(83,58,253,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px;">👋</div>
+                <h3 style="font-size:18px;margin-bottom:6px;">Bienvenue sur votre espace !</h3>
+                <p style="margin-bottom:0;">Votre compte est prêt. Pour générer des devis et factures avec vos coordonnées, commencez par <strong>renseigner les informations de votre entreprise</strong> dans les paramètres — cela prend moins d'une minute.</p>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:12px 14px;margin-bottom:22px;font-size:12px;color:var(--slate);">
+                <strong style="color:var(--navy);display:block;margin-bottom:4px;">Ce dont vous aurez besoin :</strong>
+                Nom de l'entreprise &nbsp;·&nbsp; Adresse &nbsp;·&nbsp; Téléphone &nbsp;·&nbsp; Email &nbsp;·&nbsp; Logo (optionnel)
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-welcome').classList.remove('open')">Plus tard</button>
+                <a href="{{ route('settings.edit') }}" class="btn btn-primary">Configurer mon entreprise</a>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal paramètres incomplets --}}
+    <div class="modal-overlay" id="modal-settings-incomplete">
+        <div class="modal-box" style="max-width:440px;">
+            <div style="text-align:center;margin-bottom:18px;">
+                <div style="width:48px;height:48px;background:rgba(234,88,12,0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 12px;">⚠️</div>
+                <h3 style="font-size:16px;margin-bottom:6px;">Paramètres incomplets</h3>
+                <p style="margin-bottom:0;">Certaines informations essentielles de votre entreprise (nom, adresse, téléphone, email) ne sont pas encore renseignées.<br><br>Vos PDF ne pourront pas afficher les coordonnées correctes.</p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-settings-incomplete').classList.remove('open')">Ignorer</button>
+                <a href="{{ route('settings.edit') }}" class="btn btn-primary">Compléter les paramètres</a>
+            </div>
+        </div>
+    </div>
+
     {{-- ── Main content ── --}}
     <main class="main-content">
 
@@ -797,6 +833,25 @@
 
     <script>
         (function () {
+            @if(session('show_welcome_modal'))
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.getElementById('modal-welcome').classList.add('open');
+                });
+            @elseif(session('show_settings_modal'))
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.getElementById('modal-settings-incomplete').classList.add('open');
+                });
+            @endif
+
+            ['modal-welcome', 'modal-settings-incomplete'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('click', function (e) {
+                        if (e.target === this) this.classList.remove('open');
+                    });
+                }
+            });
+
             window.openDeleteModal = function (form, message) {
                 window._deleteFormToSubmit = form;
                 document.getElementById('delete-modal-message').textContent = message || 'Êtes-vous sûr de vouloir supprimer cet élément ?';

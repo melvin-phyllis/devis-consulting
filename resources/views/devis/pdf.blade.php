@@ -352,13 +352,19 @@
 
     <div class="footer-blue">
         @if(isset($settings))
-            {{ $settings->nom_entreprise }}
-            @if($settings->rccm_cc) — {{ $settings->rccm_cc }}@endif
-            @if($settings->adresse) — {{ $settings->adresse }}@endif
-            <br>
-            @if($settings->telephone) Tél: {{ $settings->telephone }}@endif
-            @if($settings->email) — Email: {{ $settings->email }}@endif
-            @if($settings->site_web) — {{ $settings->site_web }}@endif
+            @php
+                $fl1 = $settings->nom_entreprise ?? '';
+                if ($settings->rccm_cc) $fl1 .= '-RCCM: ' . $settings->rccm_cc;
+                if ($settings->ncc) $fl1 .= ', NCC: ' . $settings->ncc;
+                if ($settings->adresse) $fl1 .= ', Siège social: ' . $settings->adresse;
+                $fl2parts = [];
+                if ($settings->telephone) $fl2parts[] = 'Tél: ' . $settings->telephone;
+                if (!empty($settings->telephone2)) $fl2parts[] = $settings->telephone2;
+                if ($settings->email) $fl2parts[] = 'Email: ' . $settings->email;
+                if ($settings->site_web) $fl2parts[] = $settings->site_web;
+                $fl2 = implode(', ', $fl2parts);
+            @endphp
+            {{ $fl1 }}<br>{{ $fl2 }}
         @endif
     </div>
 

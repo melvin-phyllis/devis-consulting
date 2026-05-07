@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Setting extends Model
 {
-    protected $fillable = ['user_id', 'nom_entreprise', 'logo', 'cachet', 'adresse', 'telephone', 'email', 'site_web', 'rccm_cc', 'tva_defaut', 'devise', 'prefixe_entreprise', 'code_ville'];
+    protected $fillable = ['user_id', 'nom_entreprise', 'logo', 'cachet', 'adresse', 'telephone', 'telephone2', 'email', 'site_web', 'rccm_cc', 'ncc', 'tva_defaut', 'devise', 'prefixe_entreprise', 'code_ville'];
 
     protected static function booted(): void
     {

@@ -154,30 +154,42 @@
                         <input type="text" name="nom_entreprise" value="{{ $settings->nom_entreprise ?? '' }}" required placeholder="Ex : Mon Entreprise SARL">
                     </div>
                     <div class="form-group">
-                        <label>RCCM / CC <span style="font-weight:300;color:var(--slate);">(optionnel)</span></label>
-                        <input type="text" name="rccm_cc" value="{{ $settings->rccm_cc ?? '' }}" placeholder="Ex : CI-ABJ-2020-B-13747">
+                        <label>Adresse / Siège social</label>
+                        <input type="text" name="adresse" value="{{ $settings->adresse ?? '' }}" placeholder="Ex : Riviera Palmeraie, Cocody, Abidjan, Côte d'Ivoire">
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Adresse physique</label>
-                    <textarea name="adresse" rows="2" placeholder="Ex : Riviera Palmeraie, Cocody, Abidjan, Côte d'Ivoire">{{ $settings->adresse ?? '' }}</textarea>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Téléphone</label>
-                        <input type="tel" name="telephone" value="{{ $settings->telephone ?? '' }}" placeholder="+225 01 00 00 00 00">
+                        <label>RCCM <span style="font-weight:300;color:var(--slate);">(optionnel)</span></label>
+                        <input type="text" name="rccm_cc" value="{{ $settings->rccm_cc ?? '' }}" placeholder="Ex : N CI-ABJ-2020-B-13747">
                     </div>
+                    <div class="form-group">
+                        <label>NCC <span style="font-weight:300;color:var(--slate);">(Numéro Compte Contribuable — optionnel)</span></label>
+                        <input type="text" name="ncc" value="{{ $settings->ncc ?? '' }}" placeholder="Ex : 2046187R">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Téléphone principal</label>
+                        <input type="tel" name="telephone" value="{{ $settings->telephone ?? '' }}" placeholder="+225 01 52 22 63 12">
+                    </div>
+                    <div class="form-group">
+                        <label>Téléphone secondaire <span style="font-weight:300;color:var(--slate);">(optionnel)</span></label>
+                        <input type="tel" name="telephone2" value="{{ $settings->telephone2 ?? '' }}" placeholder="+225 05 65 24 69 74">
+                    </div>
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
                         <label>Email</label>
                         <input type="email" name="email" value="{{ $settings->email ?? '' }}" placeholder="contact@monentreprise.com">
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Site web <span style="font-weight:300;color:var(--slate);">(optionnel)</span></label>
-                    <input type="text" name="site_web" value="{{ $settings->site_web ?? '' }}" placeholder="www.monentreprise.com">
+                    <div class="form-group">
+                        <label>Site web <span style="font-weight:300;color:var(--slate);">(optionnel)</span></label>
+                        <input type="text" name="site_web" value="{{ $settings->site_web ?? '' }}" placeholder="www.monentreprise.com">
+                    </div>
                 </div>
             </div>
         </div>
@@ -194,13 +206,19 @@
             <div class="settings-card-body">
                 <span class="footer-preview-label">Aperçu du pied de page :</span>
                 <div class="footer-preview">
-                    <strong>{{ $settings->nom_entreprise ?? 'Nom entreprise' }}</strong>
-                    @if(!empty($settings->rccm_cc)) — {{ $settings->rccm_cc }}@endif
-                    @if(!empty($settings->adresse)) — {{ $settings->adresse }}@endif
-                    <br>
-                    @if(!empty($settings->telephone)) Tél : {{ $settings->telephone }}@endif
-                    @if(!empty($settings->email)) — {{ $settings->email }}@endif
-                    @if(!empty($settings->site_web)) — {{ $settings->site_web }}@endif
+                    @php
+                        $line1 = $settings->nom_entreprise ?? 'NOM ENTREPRISE';
+                        if (!empty($settings->rccm_cc)) $line1 .= '-RCCM: ' . $settings->rccm_cc;
+                        if (!empty($settings->ncc)) $line1 .= ', NCC: ' . $settings->ncc;
+                        if (!empty($settings->adresse)) $line1 .= ', Siège social: ' . $settings->adresse;
+                        $parts2 = [];
+                        if (!empty($settings->telephone)) $parts2[] = 'Tél: ' . $settings->telephone;
+                        if (!empty($settings->telephone2)) $parts2[] = $settings->telephone2;
+                        if (!empty($settings->email)) $parts2[] = 'Email: ' . $settings->email;
+                        if (!empty($settings->site_web)) $parts2[] = $settings->site_web;
+                        $line2 = implode(', ', $parts2);
+                    @endphp
+                    {{ $line1 }}<br>{{ $line2 }}
                 </div>
                 <p style="font-size:11px;color:var(--slate);margin-top:8px;">Pour modifier ce pied de page, mettez à jour les champs ci-dessus (Identité de l'entreprise).</p>
             </div>

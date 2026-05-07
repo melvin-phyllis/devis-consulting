@@ -11,6 +11,22 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        $user = auth()->user();
+        $settings = \App\Models\Setting::first();
+
+        $settingsIncomplete = !$settings
+            || empty($settings->nom_entreprise)
+            || empty($settings->adresse)
+            || empty($settings->telephone)
+            || empty($settings->email);
+
+        if (!$user->has_seen_welcome) {
+            $user->update(['has_seen_welcome' => true]);
+            session()->flash('show_welcome_modal', true);
+        } elseif ($settingsIncomplete) {
+            session()->flash('show_settings_modal', true);
+        }
+
         // Nombre total de devis
         $totalDevis = Document::where('type', 'devis')->count();
 
