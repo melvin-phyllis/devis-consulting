@@ -288,14 +288,33 @@ class DevisController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
+    private function imageToBase64(?string $storagePath): ?string
+    {
+        if (!$storagePath) return null;
+        $full = storage_path('app/public/' . $storagePath);
+        if (!file_exists($full)) {
+            // Fallback: via le lien symbolique public/storage
+            $full = public_path('storage/' . $storagePath);
+        }
+        if (!file_exists($full)) return null;
+        $mime = mime_content_type($full) ?: 'image/png';
+        return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($full));
+    }
+
     public function download($id)
     {
         $devis = \App\Models\Document::with(['client', 'lignes', 'paiements'])->findOrFail($id);
         $settings = \App\Models\Setting::first();
+
+        // Pré-encoder toutes les images en base64 pour DomPDF (fonctionne en local et en prod)
+        $logoBase64        = $this->imageToBase64($settings->logo ?? null);
+        $cachetBase64      = $this->imageToBase64($settings->cachet ?? null);
+        $clientLogoBase64  = $this->imageToBase64($devis->client->logo ?? null);
+
         $template = in_array($settings->pdf_template ?? '', ['classique', 'moderne', 'elegance'])
             ? 'devis.pdf_' . $settings->pdf_template
             : 'devis.pdf_classique';
-        $pdf = Pdf::loadView($template, compact('devis', 'settings'));
+        $pdf = Pdf::loadView($template, compact('devis', 'settings', 'logoBase64', 'cachetBase64', 'clientLogoBase64'));
 
         // Après reflow(), Dompdf appelle ces callbacks puis page_script : _pages est alors rempli.
         // Un appel direct à page_script() avant render() ne dessine rien (tableau de pages vide).

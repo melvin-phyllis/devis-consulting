@@ -258,9 +258,9 @@
         <table class="header-band-inner">
             <tr>
                 <td class="logo-cell">
-                    @if(isset($settings) && $settings->logo)
+                    @if($logoBase64 ?? null)
                         <div class="logo-white-bg">
-                            <img src="{{ storage_path('app/public/' . $settings->logo) }}" class="logo">
+                            <img src="{{ $logoBase64 }}" class="logo">
                         </div>
                     @endif
                 </td>
@@ -289,8 +289,8 @@
             <td style="width: 45%; vertical-align: top;">
                 <div class="client-box">
                     <div class="client-box-title">Destinataire</div>
-                    @if(isset($devis->client->logo) && $devis->client->logo)
-                        <img src="{{ storage_path('app/public/' . $devis->client->logo) }}"
+                    @if($clientLogoBase64 ?? null)
+                        <img src="{{ $clientLogoBase64 }}"
                             style="width: 60px; height: auto; margin-bottom: 4px; display:block;"><br>
                     @endif
                     <strong>{{ $devis->client->raison_sociale }}</strong><br>
@@ -339,8 +339,8 @@
             <tr>
                 <td class="footer-left-col">
                     <div class="cachet-wrap">
-                        @if(isset($settings) && $settings->cachet)
-                            <img src="{{ storage_path('app/public/' . $settings->cachet) }}"
+                        @if($cachetBase64 ?? null)
+                            <img src="{{ $cachetBase64 }}"
                                 alt=""
                                 style="max-width: 130px; max-height: 110px; width: auto; height: auto; opacity: 0.95;">
                         @endif

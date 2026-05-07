@@ -172,8 +172,8 @@
     <table class="header-table">
         <tr>
             <td>
-                @if(isset($settings) && $settings->logo)
-                    <img src="{{ storage_path('app/public/' . $settings->logo) }}" class="logo">
+                @if($logoBase64 ?? null)
+                    <img src="{{ $logoBase64 }}" class="logo">
                 @endif
             </td>
             <td class="ref-doc">
@@ -201,8 +201,8 @@
             </td>
             <td style="width: 40%; text-align: right; vertical-align: top;">
                 <p><strong>Destinataire</strong></p>
-                @if(isset($devis->client->logo) && $devis->client->logo)
-                    <img src="{{ storage_path('app/public/' . $devis->client->logo) }}"
+                @if($clientLogoBase64 ?? null)
+                    <img src="{{ $clientLogoBase64 }}"
                         style="width: 80px; height: auto; margin-bottom: 5px; float: right; clear: both;"><br>
                 @endif
                 <p style="clear: both;"><strong>{{ $devis->client->raison_sociale }}</strong><br>
@@ -245,8 +245,8 @@
             <tr>
                 <td class="footer-left-col">
                     <div class="cachet-wrap">
-                        @if(isset($settings) && $settings->cachet)
-                            <img src="{{ storage_path('app/public/' . $settings->cachet) }}"
+                        @if($cachetBase64 ?? null)
+                            <img src="{{ $cachetBase64 }}"
                                 alt=""
                                 style="max-width: 130px; max-height: 110px; width: auto; height: auto; opacity: 0.95;">
                         @endif
