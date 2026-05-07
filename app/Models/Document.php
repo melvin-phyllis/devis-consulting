@@ -46,6 +46,7 @@ class Document extends Model
         // Compter les documents de ce type pour l'année et le mois en cours (sans le scope user)
         $count = static::withoutGlobalScope('user')
             ->where('type', $type)
+            ->where('user_id', auth()->id())
             ->whereYear('created_at', $annee)
             ->whereMonth('created_at', $mois)
             ->count();

@@ -1,237 +1,332 @@
 @extends('layouts.sidebar')
 
-@section('title', 'Tableau de Bord - YA Consulting')
+@section('title', 'Tableau de bord — devis-consulting')
 
 @section('styles')
 <style>
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin-bottom: 32px;
+        gap: 16px;
+        margin-bottom: 24px;
     }
 
     .stat-card {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        transition: all 0.3s ease;
-        position: relative;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 20px;
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-card:hover {
+        box-shadow: var(--shadow-blue) 0px 12px 24px -12px, var(--shadow-black) 0px 6px 12px -6px;
+        transform: translateY(-1px);
+    }
+
+    .stat-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: var(--slate);
+        margin-bottom: 10px;
+    }
+
+    .stat-value {
+        font-size: 26px;
+        font-weight: 400;
+        color: var(--navy);
+        letter-spacing: -0.8px;
+        line-height: 1;
+    }
+
+    .stat-unit {
+        font-size: 11px;
+        color: var(--slate);
+        font-weight: 300;
+        margin-top: 4px;
+    }
+
+    .stat-badge {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 500;
+        padding: 2px 6px;
+        border-radius: 3px;
+        margin-top: 8px;
+    }
+
+    /* Progress */
+    .progress-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+    }
+
+    .progress-label-text {
+        font-size: 13px;
+        color: var(--dark-slate);
+        font-weight: 400;
+        white-space: nowrap;
+        min-width: 220px;
+    }
+
+    .progress-bar-wrap {
+        flex: 1;
+        background: var(--border);
+        border-radius: 3px;
+        height: 6px;
         overflow: hidden;
     }
 
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 4px;
+    .progress-bar-fill {
+        height: 6px;
+        background: var(--purple);
+        border-radius: 3px;
+        transition: width 0.8s ease;
     }
 
-    .stat-card:nth-child(1)::before { background: linear-gradient(90deg, #667eea, #764ba2); }
-    .stat-card:nth-child(2)::before { background: linear-gradient(90deg, #f093fb, #f5576c); }
-    .stat-card:nth-child(3)::before { background: linear-gradient(90deg, #4ade80, #06b6d4); }
-    .stat-card:nth-child(4)::before { background: linear-gradient(90deg, #fbbf24, #f59e0b); }
-
-    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
-    .stat-card .stat-icon { font-size: 2em; margin-bottom: 12px; }
-    .stat-card .stat-label { color: #6b7280; font-size: 0.8em; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-card .stat-value { font-size: 1.8em; font-weight: 700; color: #1e1b4b; margin-top: 4px; }
-
-    .progress-section {
-        background: white;
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        margin-bottom: 32px;
+    .progress-pct {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--navy);
+        white-space: nowrap;
+        min-width: 40px;
+        text-align: right;
     }
-    .progress-section h3 { color: #374151; font-size: 1em; font-weight: 600; margin-bottom: 12px; }
-    .progress-bar-bg { background: #e5e7eb; border-radius: 8px; overflow: hidden; height: 12px; }
-    .progress-bar-fill { height: 12px; background: linear-gradient(90deg, #4ade80, #06b6d4); border-radius: 8px; transition: width 0.8s ease; }
-    .progress-label { color: #6b7280; font-size: 0.85em; margin-top: 8px; }
 
-    .section-title { font-size: 1.2em; font-weight: 700; color: #1e1b4b; margin-bottom: 20px; }
+    /* Overdue table */
+    .overdue-card {
+        background: #fff;
+        border: 1px solid #fecaca;
+        border-left: 3px solid #dc2626;
+        border-radius: 6px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+    }
 
+    .overdue-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .overdue-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #b91c1c;
+    }
+
+    .pulse-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #dc2626;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* Quick actions */
     .actions-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 20px;
-        margin-bottom: 32px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
     }
 
     .action-card {
-        background: white;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 20px;
         text-decoration: none;
         color: inherit;
         display: flex;
         flex-direction: column;
+        gap: 6px;
+        transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
     }
-    .action-card:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(0,0,0,0.12); }
-
-    .action-card-icon {
-        padding: 32px 20px;
-        text-align: center;
-        font-size: 3em;
-        min-height: 110px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .action-card:hover {
+        border-color: var(--purple);
+        box-shadow: var(--shadow-blue) 0px 8px 20px -8px;
+        transform: translateY(-1px);
     }
-    .action-card:nth-child(1) .action-card-icon { background: linear-gradient(135deg, #667eea, #764ba2); }
-    .action-card:nth-child(2) .action-card-icon { background: linear-gradient(135deg, #f093fb, #f5576c); }
-    .action-card:nth-child(3) .action-card-icon { background: linear-gradient(135deg, #4ade80, #22d3ee); }
 
-    .action-card-body { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
-    .action-card-body h3 { font-size: 1.1em; color: #1e1b4b; margin-bottom: 6px; }
-    .action-card-body p { color: #6b7280; font-size: 0.85em; line-height: 1.5; flex-grow: 1; }
-
-    .action-card-footer {
-        padding: 14px 20px;
-        border-top: 1px solid #f3f4f6;
-        color: #667eea;
+    .action-label {
+        font-size: 11px;
         font-weight: 600;
-        font-size: 0.85em;
-        transition: all 0.2s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        color: var(--purple);
     }
-    .action-card:hover .action-card-footer { color: #4338ca; padding-left: 24px; }
 
-    .main-footer { text-align: center; color: #9ca3af; padding-top: 24px; border-top: 1px solid #e5e7eb; font-size: 0.8em; }
+    .action-title {
+        font-size: 15px;
+        font-weight: 400;
+        color: var(--navy);
+        letter-spacing: -0.15px;
+    }
 
-    @media (max-width: 900px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 500px) { .stats-grid { grid-template-columns: 1fr; } }
+    .action-desc {
+        font-size: 12px;
+        color: var(--slate);
+        font-weight: 300;
+        line-height: 1.55;
+    }
+
+    .action-arrow {
+        font-size: 12px;
+        color: var(--purple);
+        margin-top: 4px;
+    }
+
+    .section-heading {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--dark-slate);
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        margin-bottom: 14px;
+    }
+
+    @media (max-width: 900px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        .actions-grid { grid-template-columns: 1fr; }
+        .progress-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+        .progress-label-text { min-width: unset; }
+        .progress-bar-wrap { width: 100%; }
+    }
+    @media (max-width: 500px) {
+        .stats-grid { grid-template-columns: 1fr; }
+    }
 </style>
 @endsection
 
 @section('content')
-    <!-- Top Bar -->
-    <div class="page-header">
-        <div>
-            <h1>Tableau de Bord</h1>
-            <p class="page-header-sub">Bienvenue, {{ Auth::user()->name ?? 'Utilisateur' }} 👋</p>
+
+{{-- Page header --}}
+<div class="page-header">
+    <div>
+        <h1>Tableau de bord</h1>
+        <p class="page-header-sub">Bonjour, {{ Auth::user()->name ?? 'Utilisateur' }} — {{ \Carbon\Carbon::now()->isoFormat('dddd D MMMM YYYY') }}</p>
+    </div>
+    <a href="{{ route('devis.create') }}" class="btn btn-primary">+ Nouveau devis</a>
+</div>
+
+{{-- Stats --}}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Devis</div>
+        <div class="stat-value">{{ $totalDevis ?? 0 }}</div>
+        <div class="stat-unit">ce mois</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Factures</div>
+        <div class="stat-value">{{ $totalFactures ?? 0 }}</div>
+        <div class="stat-unit">émises</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">CA Prévu</div>
+        <div class="stat-value">{{ number_format($CA_Prevu ?? 0, 0, ',', ' ') }}</div>
+        <div class="stat-unit">FCFA — total factures</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">CA Encaissé</div>
+        <div class="stat-value">{{ number_format($CA_Encaisse ?? 0, 0, ',', ' ') }}</div>
+        <div class="stat-unit">FCFA — paiements reçus</div>
+        @php $taux = ($CA_Prevu ?? 0) > 0 ? round(($CA_Encaisse / $CA_Prevu) * 100) : 0; @endphp
+        <div class="stat-badge" style="background:rgba(21,190,83,0.1);color:#15803d;">{{ $taux }}% encaissé</div>
+    </div>
+</div>
+
+{{-- Barre de progression devis → factures --}}
+<div class="progress-card">
+    <div class="progress-label-text">Devis transformés en factures</div>
+    <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width: {{ $percentTransformed ?? 0 }}%;"></div>
+    </div>
+    <div class="progress-pct">{{ $percentTransformed ?? 0 }}%</div>
+</div>
+
+{{-- Factures en retard --}}
+@if(isset($facturesEnRetard) && $facturesEnRetard->count() > 0)
+<div class="overdue-card">
+    <div class="overdue-header">
+        <div class="overdue-title">
+            <span class="pulse-dot"></span>
+            Factures en retard
+            <span class="badge badge-danger">{{ $totalFacturesEnRetard ?? $facturesEnRetard->count() }}</span>
         </div>
-        <div>
-            <a href="{{ route('devis.create') }}" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.9em;">
-                + Nouveau Devis
-            </a>
-        </div>
+        <a href="{{ route('factures.index') }}" class="btn btn-danger btn-sm">Voir tout →</a>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">📄</div>
-            <div class="stat-label">Total Devis</div>
-            <div class="stat-value">{{ $totalDevis ?? 0 }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">🧾</div>
-            <div class="stat-label">Total Factures</div>
-            <div class="stat-value">{{ $totalFactures ?? 0 }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">💰</div>
-            <div class="stat-label">CA Prévu</div>
-            <div class="stat-value">{{ number_format($CA_Prevu ?? 0, 0, ',', ' ') }} <span style="font-size: 0.4em; color: #6b7280;">FCFA</span></div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">✅</div>
-            <div class="stat-label">CA Encaissé</div>
-            <div class="stat-value">{{ number_format($CA_Encaisse ?? 0, 0, ',', ' ') }} <span style="font-size: 0.4em; color: #6b7280;">FCFA</span></div>
-        </div>
-    </div>
-
-    <!-- Progress -->
-    <div class="progress-section">
-        <h3>Progression des devis transformés en factures</h3>
-        <div class="progress-bar-bg">
-            <div class="progress-bar-fill" style="width: {{ $percentTransformed ?? 0 }}%;"></div>
-        </div>
-        <p class="progress-label">{{ $percentTransformed ?? 0 }}% des devis transformés en factures</p>
-    </div>
-
-    <!-- Factures en Retard (affichage des 10 plus anciennes) -->
-    @if(isset($facturesEnRetard) && $facturesEnRetard->count() > 0)
-    <div class="content-card" style="border-left: 4px solid #ef4444; margin-bottom: 32px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-            <h2 style="color: #991b1b; font-size: 1.1em; margin: 0; display: flex; align-items: center; gap: 8px;">
-                <span style="display: inline-block; width: 10px; height: 10px; background: #ef4444; border-radius: 50%; animation: pulse 1.5s infinite;"></span>
-                🚨 Factures en Retard
-                <span class="badge badge-danger">{{ $totalFacturesEnRetard ?? $facturesEnRetard->count() }}</span>
-            </h2>
-            <a href="{{ route('factures.index') }}" class="btn btn-danger btn-sm">Voir tout ({{ $totalFacturesEnRetard ?? $facturesEnRetard->count() }} en retard) →</a>
-        </div>
-        @if(($totalFacturesEnRetard ?? 0) > 10)
-        <p style="font-size: 0.85em; color: #6b7280; margin-bottom: 12px;">Affichage des <strong>10 factures les plus anciennes</strong>. Voir la liste complète sur la page Factures.</p>
-        @endif
-        <table>
-            <thead>
-                <tr>
-                    <th>Numéro</th>
-                    <th>Client</th>
-                    <th>Date d'émission</th>
-                    <th>Retard</th>
-                    <th>Montant TTC</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($facturesEnRetard as $facture)
-                <tr>
-                    <td><strong>{{ $facture->numero }}</strong></td>
-                    <td>{{ $facture->client->raison_sociale ?? 'N/A' }}</td>
-                    <td>{{ \Carbon\Carbon::parse($facture->date_emission)->format('d/m/Y') }}</td>
-                    <td>
-                        @php $jours = \Carbon\Carbon::parse($facture->date_emission)->diffInDays(now()); @endphp
-                        <span class="badge {{ $jours > 30 ? 'badge-danger' : 'badge-warning' }}">
-                            {{ $jours }} jours
-                        </span>
-                    </td>
-                    <td><strong>{{ number_format($facture->total_ttc, 0, ',', ' ') }} FCFA</strong></td>
-                    <td>
-                        <a href="{{ route('devis.show', $facture->id) }}" class="btn btn-success btn-sm">💰 Paiement</a>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-        <style>@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }</style>
-    </div>
+    @if(($totalFacturesEnRetard ?? 0) > 10)
+        <p style="font-size:12px;color:var(--slate);margin-bottom:12px;">Les 10 factures les plus anciennes — <a href="{{ route('factures.index') }}" style="color:var(--purple);">voir toutes</a></p>
     @endif
 
-    <!-- Quick Actions -->
-    <h2 class="section-title">Accès Rapide</h2>
-    <div class="actions-grid">
-        <a href="{{ route('devis.create') }}" class="action-card">
-            <div class="action-card-icon">✨</div>
-            <div class="action-card-body">
-                <h3>Créer un Devis</h3>
-                <p>Créez rapidement un nouveau devis professionnel.</p>
-            </div>
-            <div class="action-card-footer">Créer maintenant →</div>
-        </a>
-        <a href="{{ route('devis.index') }}" class="action-card">
-            <div class="action-card-icon">📋</div>
-            <div class="action-card-body">
-                <h3>Gérer les Devis</h3>
-                <p>Consultez, éditez et suivez vos devis existants.</p>
-            </div>
-            <div class="action-card-footer">Voir les devis →</div>
-        </a>
-        <a href="{{ route('factures.index') }}" class="action-card">
-            <div class="action-card-icon">🧾</div>
-            <div class="action-card-body">
-                <h3>Gérer les Factures</h3>
-                <p>Suivez vos factures et leur statut de paiement.</p>
-            </div>
-            <div class="action-card-footer">Voir les factures →</div>
-        </a>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Référence</th>
+                <th>Client</th>
+                <th>Date d'émission</th>
+                <th>Retard</th>
+                <th>Montant TTC</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($facturesEnRetard as $facture)
+            <tr>
+                <td style="font-weight:500;color:var(--navy);">{{ $facture->numero }}</td>
+                <td>{{ $facture->client->raison_sociale ?? '—' }}</td>
+                <td>{{ \Carbon\Carbon::parse($facture->date_emission)->format('d/m/Y') }}</td>
+                <td>
+                    @php $jours = \Carbon\Carbon::parse($facture->date_emission)->diffInDays(now()); @endphp
+                    <span class="badge {{ $jours > 30 ? 'badge-danger' : 'badge-warning' }}">{{ $jours }}j</span>
+                </td>
+                <td style="font-weight:500;">{{ number_format($facture->total_ttc, 0, ',', ' ') }} FCFA</td>
+                <td><a href="{{ route('devis.show', $facture->id) }}" class="btn btn-success btn-sm">Paiement</a></td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+</div>
+@endif
 
-    <div class="main-footer">
-        <p>© 2026 YA Consulting - Logiciel de Facturation | Version 1.0</p>
-    </div>
+{{-- Accès rapide --}}
+<div class="section-heading">Accès rapide</div>
+<div class="actions-grid">
+    <a href="{{ route('devis.create') }}" class="action-card">
+        <div class="action-label">Documents</div>
+        <div class="action-title">Créer un devis</div>
+        <div class="action-desc">Nouveau devis professionnel en quelques clics, prêt à télécharger en PDF.</div>
+        <div class="action-arrow">Créer maintenant →</div>
+    </a>
+    <a href="{{ route('devis.index') }}" class="action-card">
+        <div class="action-label">Documents</div>
+        <div class="action-title">Gérer les devis</div>
+        <div class="action-desc">Consultez, modifiez et convertissez vos devis existants en factures.</div>
+        <div class="action-arrow">Voir les devis →</div>
+    </a>
+    <a href="{{ route('factures.index') }}" class="action-card">
+        <div class="action-label">Paiements</div>
+        <div class="action-title">Gérer les factures</div>
+        <div class="action-desc">Suivez les statuts de paiement, enregistrez les règlements reçus.</div>
+        <div class="action-arrow">Voir les factures →</div>
+    </a>
+</div>
+
+<div style="border-top:1px solid var(--border);padding-top:20px;text-align:center;font-size:12px;color:var(--slate);">
+    © {{ date('Y') }} devis-consulting — Conçu pour les entreprises francophones
+</div>
+
 @endsection
