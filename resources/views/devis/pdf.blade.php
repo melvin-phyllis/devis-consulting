@@ -174,8 +174,6 @@
             <td>
                 @if(isset($settings) && $settings->logo)
                     <img src="{{ storage_path('app/public/' . $settings->logo) }}" class="logo">
-                @else
-                    <img src="{{ public_path('images/logo-ya.png') }}" class="logo">
                 @endif
             </td>
             <td class="ref-doc">
@@ -188,14 +186,13 @@
         <tr>
             <td style="width: 40%; vertical-align: top;">
                 <p><strong>Émetteur :</strong></p>
-                <p><strong>{{ $settings->nom_entreprise ?? 'YA CONSULTING' }}</strong><br>
-                    {{ $settings->adresse ?? 'Abidjan' }}<br><br>
-                    Tél.: {{ $settings->telephone ?? '+225 01 52 22 63 12' }}<br>
-                    Email: {{ $settings->email ?? 'courriel@ya-consulting.com' }}<br>
-                    @if(isset($settings->site_web) && $settings->site_web)
-                        Site web : {{ $settings->site_web }}
-                    @else
-                        Site web : www.ya-consulting.com
+                <p>
+                    @if(isset($settings))
+                        <strong>{{ $settings->nom_entreprise }}</strong><br>
+                        {{ $settings->adresse }}<br><br>
+                        @if($settings->telephone) Tél.: {{ $settings->telephone }}<br>@endif
+                        @if($settings->email) Email: {{ $settings->email }}<br>@endif
+                        @if($settings->site_web) Site web : {{ $settings->site_web }}@endif
                     @endif
                 </p>
             </td>
@@ -354,9 +351,15 @@
     </div>
 
     <div class="footer-blue">
-        YA CONSULTING-RCCM: N CI-ABJ-2020-B-13747, NCC: 2046187R, Siège social: Riviera Palmeraie, Cocody, Abidjan, Côte
-        d'Ivoire.<br>
-        Tél: (225) 01 52 22 63 12, (225) 05 65 24 69 74, Email: courriel@ya-consulting.com, www.ya-consulting.com
+        @if(isset($settings))
+            {{ $settings->nom_entreprise }}
+            @if($settings->rccm_cc) — {{ $settings->rccm_cc }}@endif
+            @if($settings->adresse) — {{ $settings->adresse }}@endif
+            <br>
+            @if($settings->telephone) Tél: {{ $settings->telephone }}@endif
+            @if($settings->email) — Email: {{ $settings->email }}@endif
+            @if($settings->site_web) — {{ $settings->site_web }}@endif
+        @endif
     </div>
 
 </body>

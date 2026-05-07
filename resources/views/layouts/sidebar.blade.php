@@ -680,7 +680,7 @@
             <a href="{{ route('dashboard') }}" class="sidebar-logo">
                 <div
                     style="background:#fff;border-radius:8px;padding:10px 16px;display:inline-flex;align-items:center;">
-                    <img src="/image/logo-devis.png" alt="Devis-Consulting" style="height:80px;width:auto;">
+                    <img src="{{ asset('image/logo-devis.png') }}" alt="Devis-Consulting" style="height:80px;width:auto;">
                 </div>
             </a>
         </div>

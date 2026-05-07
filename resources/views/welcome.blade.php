@@ -634,7 +634,7 @@
     {{-- Navigation --}}
     <nav>
         <a href="/" class="nav-logo">
-            <img src="/image/logo-devis.png" alt="Devis-Consulting" style="height:80px;width:auto;">
+            <img src="{{ asset('image/logo-devis.png') }}" alt="Devis-Consulting" style="height:80px;width:auto;">
         </a>
         <div class="nav-actions">
             @auth
