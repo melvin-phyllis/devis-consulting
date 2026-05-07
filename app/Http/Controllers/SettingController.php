@@ -16,7 +16,7 @@ class SettingController extends Controller
     {
         $settings = \App\Models\Setting::first() ?? new \App\Models\Setting(['user_id' => auth()->id()]);
 
-        $data = $request->only(['nom_entreprise', 'adresse', 'telephone', 'telephone2', 'email', 'rccm_cc', 'ncc', 'tva_defaut', 'devise', 'site_web', 'prefixe_entreprise', 'code_ville']);
+        $data = $request->only(['nom_entreprise', 'adresse', 'telephone', 'telephone2', 'email', 'rccm_cc', 'ncc', 'tva_defaut', 'devise', 'site_web', 'prefixe_entreprise', 'code_ville', 'pdf_template']);
         $data['user_id'] = auth()->id();
 
         // Traiter le logo - ne mettre à jour que s'il y a un nouveau fichier

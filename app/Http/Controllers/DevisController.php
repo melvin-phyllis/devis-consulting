@@ -292,7 +292,10 @@ class DevisController extends Controller
     {
         $devis = \App\Models\Document::with(['client', 'lignes', 'paiements'])->findOrFail($id);
         $settings = \App\Models\Setting::first();
-        $pdf = Pdf::loadView('devis.pdf', compact('devis', 'settings'));
+        $template = in_array($settings->pdf_template ?? '', ['classique', 'moderne', 'elegance'])
+            ? 'devis.pdf_' . $settings->pdf_template
+            : 'devis.pdf_classique';
+        $pdf = Pdf::loadView($template, compact('devis', 'settings'));
 
         // Après reflow(), Dompdf appelle ces callbacks puis page_script : _pages est alors rempli.
         // Un appel direct à page_script() avant render() ne dessine rien (tableau de pages vide).

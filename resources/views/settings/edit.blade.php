@@ -116,9 +116,85 @@
     .file-input-label:hover { border-color: var(--purple); color: var(--purple); }
     input[type="file"] { display: none; }
 
+    /* Sélecteur de template PDF */
+    .template-picker {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+    .template-card {
+        position: relative;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        padding: 14px 10px 12px;
+        cursor: pointer;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        display: block;
+    }
+    .template-card input[type="radio"] { display: none; }
+    .template-card:hover { border-color: var(--purple); }
+    .template-card.tpl-selected {
+        border-color: var(--purple);
+        box-shadow: 0 0 0 3px rgba(83,58,253,0.12);
+    }
+    .tpl-preview {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 10px;
+        margin-bottom: 10px;
+        min-height: 110px;
+        overflow: hidden;
+    }
+    .tpl-p-header {
+        height: 10px;
+        border-radius: 2px;
+        margin-bottom: 6px;
+        width: 100%;
+    }
+    .tpl-p-title {
+        height: 8px;
+        border-radius: 2px;
+        width: 50%;
+        margin: 0 auto 8px;
+    }
+    .tpl-p-row {
+        padding: 3px 4px;
+        margin-bottom: 2px;
+        border-radius: 2px;
+    }
+    .tpl-p-bar {
+        height: 5px;
+        border-radius: 2px;
+    }
+    .tpl-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--navy);
+        margin-bottom: 4px;
+    }
+    .tpl-desc {
+        font-size: 11px;
+        color: var(--slate);
+        font-weight: 300;
+        line-height: 1.4;
+    }
+    .tpl-badge {
+        display: inline-block;
+        font-size: 10px;
+        background: rgba(83,58,253,0.08);
+        color: var(--purple);
+        border-radius: 3px;
+        padding: 1px 6px;
+        margin-top: 6px;
+        font-weight: 500;
+    }
+    .tpl-selected .tpl-name { color: var(--purple); }
+
     @media (max-width: 900px) {
         .settings-grid { grid-template-columns: 1fr; }
         .settings-grid-full { grid-column: 1; }
+        .template-picker { grid-template-columns: 1fr; }
     }
 </style>
 @endsection
@@ -286,6 +362,81 @@
             </div>
         </div>
 
+        {{-- Modèle de PDF --}}
+        <div class="settings-card settings-grid-full">
+            <div class="settings-card-header">
+                <div class="settings-card-icon">🎨</div>
+                <div>
+                    <h2>Modèle de PDF</h2>
+                    <p>Choisissez l'apparence de vos devis et factures. Le choix s'applique immédiatement aux prochains téléchargements.</p>
+                </div>
+            </div>
+            <div class="settings-card-body">
+                <div class="template-picker">
+
+                    {{-- Classique --}}
+                    <label class="template-card {{ ($settings->pdf_template ?? 'classique') === 'classique' ? 'tpl-selected' : '' }}" for="tpl-classique">
+                        <input type="radio" name="pdf_template" id="tpl-classique" value="classique"
+                               {{ ($settings->pdf_template ?? 'classique') === 'classique' ? 'checked' : '' }}
+                               onchange="selectTemplate(this)">
+                        <div class="tpl-preview">
+                            <div class="tpl-p-header" style="background:#a9a9a9;"></div>
+                            <div class="tpl-p-title" style="background:#1a2a5a;"></div>
+                            <div class="tpl-p-row"><div class="tpl-p-bar" style="background:#a9a9a9; width:100%;"></div></div>
+                            <div class="tpl-p-row"><div class="tpl-p-bar" style="background:#eee; width:80%;"></div></div>
+                            <div class="tpl-p-row"><div class="tpl-p-bar" style="background:#eee; width:65%;"></div></div>
+                            <div class="tpl-p-row"><div class="tpl-p-bar" style="background:#eee; width:90%;"></div></div>
+                            <div style="margin-top:6px;"><div class="tpl-p-bar" style="background:#1a2a5a; width:50%; height:14px; margin-left:auto;"></div></div>
+                        </div>
+                        <div class="tpl-name">Classique</div>
+                        <div class="tpl-desc">En-têtes gris, bordures noires, pied de page bleu. Style sobre et traditionnel.</div>
+                        <div class="tpl-badge">Par défaut</div>
+                    </label>
+
+                    {{-- Moderne --}}
+                    <label class="template-card {{ ($settings->pdf_template ?? '') === 'moderne' ? 'tpl-selected' : '' }}" for="tpl-moderne">
+                        <input type="radio" name="pdf_template" id="tpl-moderne" value="moderne"
+                               {{ ($settings->pdf_template ?? '') === 'moderne' ? 'checked' : '' }}
+                               onchange="selectTemplate(this)">
+                        <div class="tpl-preview">
+                            <div style="background:#533afd; height:5px; margin:-8px -10px 8px; border-radius:2px 2px 0 0;"></div>
+                            <div class="tpl-p-header" style="background:#533afd;"></div>
+                            <div class="tpl-p-title" style="background:#533afd; border-radius:2px;"></div>
+                            <div class="tpl-p-row"><div class="tpl-p-bar" style="background:#533afd; width:100%;"></div></div>
+                            <div class="tpl-p-row" style="background:#f5f3ff;"><div class="tpl-p-bar" style="background:#e0dbff; width:75%;"></div></div>
+                            <div class="tpl-p-row"><div class="tpl-p-bar" style="background:#eee; width:60%;"></div></div>
+                            <div class="tpl-p-row" style="background:#f5f3ff;"><div class="tpl-p-bar" style="background:#e0dbff; width:85%;"></div></div>
+                            <div style="margin-top:6px;"><div class="tpl-p-bar" style="background:#533afd; width:50%; height:14px; margin-left:auto;"></div></div>
+                        </div>
+                        <div class="tpl-name">Moderne</div>
+                        <div class="tpl-desc">Thème violet, bande supérieure colorée, lignes alternées. Dynamique et contemporain.</div>
+                    </label>
+
+                    {{-- Élégance --}}
+                    <label class="template-card {{ ($settings->pdf_template ?? '') === 'elegance' ? 'tpl-selected' : '' }}" for="tpl-elegance">
+                        <input type="radio" name="pdf_template" id="tpl-elegance" value="elegance"
+                               {{ ($settings->pdf_template ?? '') === 'elegance' ? 'checked' : '' }}
+                               onchange="selectTemplate(this)">
+                        <div class="tpl-preview">
+                            <div style="background:#061b31; margin:-8px -10px 8px; padding:6px 10px; border-radius:2px 2px 0 0;">
+                                <div style="background:rgba(255,255,255,0.2); height:6px; border-radius:1px; width:40%;"></div>
+                                <div style="background:rgba(255,255,255,0.1); height:4px; border-radius:1px; width:60%; margin-top:3px;"></div>
+                            </div>
+                            <div class="tpl-p-title" style="background:#061b31;"></div>
+                            <div class="tpl-p-row"><div class="tpl-p-bar" style="background:#061b31; width:100%;"></div></div>
+                            <div class="tpl-p-row" style="background:#f8f9fa;"><div class="tpl-p-bar" style="background:#dde; width:75%;"></div></div>
+                            <div class="tpl-p-row"><div class="tpl-p-bar" style="background:#eee; width:60%;"></div></div>
+                            <div class="tpl-p-row" style="background:#f8f9fa;"><div class="tpl-p-bar" style="background:#dde; width:85%;"></div></div>
+                            <div style="margin-top:6px;"><div class="tpl-p-bar" style="background:#061b31; width:50%; height:14px; margin-left:auto;"></div></div>
+                        </div>
+                        <div class="tpl-name">Élégance</div>
+                        <div class="tpl-desc">Bandeau sombre en en-tête, style corporate et premium. Idéal pour les grandes entreprises.</div>
+                    </label>
+
+                </div>
+            </div>
+        </div>
+
         {{-- Logo --}}
         <div class="settings-card">
             <div class="settings-card-header">
@@ -347,6 +498,11 @@
 
 @section('scripts')
 <script>
+function selectTemplate(radio) {
+    document.querySelectorAll('.template-card').forEach(function(c) { c.classList.remove('tpl-selected'); });
+    radio.closest('.template-card').classList.add('tpl-selected');
+}
+
 function updatePreview() {
     const prefixe = document.getElementById('input-prefixe').value.toUpperCase() || 'YAC';
     const ville   = document.getElementById('input-ville').value.toUpperCase() || 'ABJ';
