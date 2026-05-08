@@ -35,7 +35,7 @@
                             {{ $client->raison_sociale }}
                         </option>
                     @endforeach
-                </select>
+                </select>#
             </div>
             <div class="form-group">
                 <label>Date d'émission</label>
