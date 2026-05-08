@@ -284,24 +284,42 @@
         </table>
     </div>
 
-    <table style="width: 100%; margin-bottom: 16px;">
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
         <tr>
-            <td style="width: 45%; vertical-align: top;">
-                <div class="client-box">
-                    <div class="client-box-title">Destinataire</div>
-                    @if($clientLogoBase64 ?? null)
-                        <img src="{{ $clientLogoBase64 }}"
-                            style="width: 60px; height: auto; margin-bottom: 4px; display:block;"><br>
-                    @endif
-                    <strong>{{ $devis->client->raison_sociale }}</strong><br>
-                    {{ $devis->client->adresse ?? '' }}
-                </div>
+            {{-- Rappel émetteur compact à gauche --}}
+            <td style="width: 44%; vertical-align: top; padding-right: 12px; color: #555; font-size: 10px; line-height: 1.5;">
+                <p style="margin: 0 0 2px 0; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #aaa; font-weight: bold;">De</p>
+                @if(isset($settings))
+                    <strong style="color: #222;">{{ $settings->nom_entreprise }}</strong><br>
+                    @if($settings->adresse){{ $settings->adresse }}<br>@endif
+                    @if($settings->telephone)Tél: {{ $settings->telephone }}<br>@endif
+                    @if($settings->email){{ $settings->email }}@endif
+                @endif
             </td>
-            <td style="width: 10%; text-align: center; vertical-align: middle; color:#888;">
-                <div style="font-size:9px; text-transform:uppercase; letter-spacing:0.5px;">Date</div>
-                <div style="font-weight:bold; margin-top:4px;">{{ \Carbon\Carbon::parse($devis->date_emission)->format('d/m/Y') }}</div>
+            {{-- Débiteur : encadré navy à droite --}}
+            <td style="width: 56%; vertical-align: top;">
+                <table style="width: 100%; border-collapse: collapse; border: 2px solid #061b31;">
+                    <tr>
+                        <td style="background: #061b31; color: #fff; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 10px;">
+                            Débiteur / Destinataire
+                        </td>
+                        <td style="background: #061b31; color: rgba(255,255,255,0.6); font-size: 9px; text-align: right; padding: 4px 10px;">
+                            {{ \Carbon\Carbon::parse($devis->date_emission)->format('d/m/Y') }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 8px 10px; vertical-align: top; background: #f8f9fa;">
+                            @if($clientLogoBase64 ?? null)
+                                <img src="{{ $clientLogoBase64 }}" style="width: 55px; height: auto; margin-bottom: 4px; display: block;">
+                            @endif
+                            <strong style="font-size: 12px; color: #061b31;">{{ $devis->client->raison_sociale }}</strong><br>
+                            @if($devis->client->adresse ?? null)
+                                <span style="color: #555; font-size: 10px;">{{ $devis->client->adresse }}</span>
+                            @endif
+                        </td>
+                    </tr>
+                </table>
             </td>
-            <td style="width: 45%;"></td>
         </tr>
     </table>
 

@@ -182,31 +182,42 @@
         </tr>
     </table>
 
-    <table style="width: 100%;">
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 6px;">
         <tr>
-            <td style="width: 40%; vertical-align: top;">
-                <p><strong>Émetteur :</strong></p>
-                <p>
-                    @if(isset($settings))
-                        <strong>{{ $settings->nom_entreprise }}</strong><br>
-                        {{ $settings->adresse }}<br><br>
-                        @if($settings->telephone) Tél.: {{ $settings->telephone }}<br>@endif
-                        @if($settings->email) Email: {{ $settings->email }}<br>@endif
-                        @if($settings->site_web) Site web : {{ $settings->site_web }}@endif
-                    @endif
-                </p>
-            </td>
-            <td style="text-align: center; vertical-align: top;">
-                <p>{{ \Carbon\Carbon::parse($devis->date_emission)->format('d/m/Y') }}</p>
-            </td>
-            <td style="width: 40%; text-align: right; vertical-align: top;">
-                <p><strong>Destinataire</strong></p>
-                @if($clientLogoBase64 ?? null)
-                    <img src="{{ $clientLogoBase64 }}"
-                        style="width: 80px; height: auto; margin-bottom: 5px; float: right; clear: both;"><br>
+            {{-- Émetteur : gauche --}}
+            <td style="width: 48%; vertical-align: top; padding-right: 10px;">
+                <p style="margin: 0 0 3px 0; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; font-weight: bold;">Émetteur</p>
+                @if(isset($settings))
+                    <strong style="font-size: 12px;">{{ $settings->nom_entreprise }}</strong><br>
+                    @if($settings->adresse)<span style="color:#444;">{{ $settings->adresse }}</span><br>@endif
+                    @if($settings->telephone)Tél.: {{ $settings->telephone }}<br>@endif
+                    @if($settings->email){{ $settings->email }}<br>@endif
+                    @if($settings->site_web){{ $settings->site_web }}@endif
                 @endif
-                <p style="clear: both;"><strong>{{ $devis->client->raison_sociale }}</strong><br>
-                    {{ $devis->client->adresse ?? '' }}</p>
+            </td>
+            {{-- Débiteur : droite dans un encadré --}}
+            <td style="width: 52%; vertical-align: top;">
+                <table style="width: 100%; border-collapse: collapse; border: 2px solid #1a2a5a; float: right;">
+                    <tr>
+                        <td style="background: #1a2a5a; color: #fff; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; padding: 4px 8px;">
+                            Débiteur / Destinataire
+                        </td>
+                        <td style="background: #1a2a5a; color: rgba(255,255,255,0.7); font-size: 9px; text-align: right; padding: 4px 8px;">
+                            {{ \Carbon\Carbon::parse($devis->date_emission)->format('d/m/Y') }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="padding: 8px 10px; vertical-align: top;">
+                            @if($clientLogoBase64 ?? null)
+                                <img src="{{ $clientLogoBase64 }}" style="width: 60px; height: auto; margin-bottom: 4px; display: block;">
+                            @endif
+                            <strong style="font-size: 12px;">{{ $devis->client->raison_sociale }}</strong><br>
+                            @if($devis->client->adresse ?? null)
+                                <span style="color: #444; font-size: 10px;">{{ $devis->client->adresse }}</span>
+                            @endif
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
