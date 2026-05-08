@@ -399,18 +399,26 @@ class DevisController extends Controller
                     return $query->where('user_id', auth()->id());
                 }),
             ],
-            'date_emission' => 'required|date',
-            'taux_tva_percent' => 'required|numeric|min:0|max:100',
-            'lignes' => 'required|array|min:1',
-            'lignes.*.produit_id' => 'required',
-            'lignes.*.quantite' => 'required|numeric|min:1',
+            'date_emission'          => 'required|date',
+            'taux_tva_percent'       => 'required|numeric|min:0|max:100',
+            'lignes'                 => 'required|array|min:1',
+            'lignes.*.produit_id'    => 'required',
+            'lignes.*.quantite'      => 'required|numeric|min:1',
             'lignes.*.prix_unitaire' => 'required|numeric',
+            'client_logo'            => 'nullable|file|mimes:jpg,jpeg,png,gif,svg,webp|max:4096',
         ]);
 
         try {
             DB::beginTransaction();
 
             $devis = Document::findOrFail($id);
+
+            // Mise à jour du logo du client si un nouveau fichier est fourni
+            if ($request->hasFile('client_logo') && $request->file('client_logo')->isValid()) {
+                $client = \App\Models\Client::findOrFail($request->client_id);
+                if ($client->logo) \Illuminate\Support\Facades\Storage::disk('public')->delete($client->logo);
+                $client->update(['logo' => $request->file('client_logo')->store('clients', 'public')]);
+            }
 
             // Recalcul des totaux
             $total_ht = 0;
@@ -450,7 +458,9 @@ class DevisController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('devis.index')->with('success', 'Devis mis à jour avec succès !');
+            $route = $devis->type === 'facture' ? 'factures.index' : 'devis.index';
+            $label = $devis->type === 'facture' ? 'Facture' : 'Devis';
+            return redirect()->route($route)->with('success', $label . ' mis à jour avec succès !');
 
         } catch (\Exception $e) {
             DB::rollback();

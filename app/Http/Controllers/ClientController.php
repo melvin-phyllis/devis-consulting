@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Storage;
 
 class ClientController extends Controller
 {
@@ -34,13 +35,19 @@ class ClientController extends Controller
 {
     $validated = $request->validate([
         'raison_sociale' => 'required|string|max:255',
-        'adresse' => 'required',
-        'telephone' => 'required',
-        'email' => 'required|email',
-        'rccm_cc' => 'nullable|string',
+        'adresse'        => 'required',
+        'telephone'      => 'required',
+        'email'          => 'required|email',
+        'rccm_cc'        => 'nullable|string',
+        'logo'           => 'nullable|file|mimes:jpg,jpeg,png,gif,svg,webp|max:4096',
     ]);
 
     $validated['user_id'] = auth()->id();
+
+    if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+        $validated['logo'] = $request->file('logo')->store('clients', 'public');
+    }
+
     \App\Models\Client::create($validated);
 
     return redirect()->route('clients.index')->with('success', 'Client créé avec succès !');
@@ -76,18 +83,20 @@ class ClientController extends Controller
 
         $validated = $request->validate([
             'raison_sociale' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                Rule::unique('clients')->where(function ($query) {
-                    return $query->where('user_id', auth()->id());
-                })->ignore($client->id),
+            'email'          => [
+                'required', 'email', 'max:255',
+                Rule::unique('clients')->where(fn($q) => $q->where('user_id', auth()->id()))->ignore($client->id),
             ],
             'telephone' => 'required|string|max:20',
-            'adresse' => 'required|string',
-            'rccm_cc' => 'nullable|string|max:50',
+            'adresse'   => 'required|string',
+            'rccm_cc'   => 'nullable|string|max:50',
+            'logo'      => 'nullable|file|mimes:jpg,jpeg,png,gif,svg,webp|max:4096',
         ]);
+
+        if ($request->hasFile('logo') && $request->file('logo')->isValid()) {
+            if ($client->logo) Storage::disk('public')->delete($client->logo);
+            $validated['logo'] = $request->file('logo')->store('clients', 'public');
+        }
 
         $client->update($validated);
 

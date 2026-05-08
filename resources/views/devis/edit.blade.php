@@ -1,6 +1,6 @@
 @extends('layouts.sidebar')
 
-@section('title', 'Éditer le Devis - YA Consulting')
+@section('title', ($devis->type === 'facture' ? 'Éditer la Facture' : 'Éditer le Devis') . ' - YA Consulting')
 
 @section('styles')
 <style>
@@ -13,22 +13,27 @@
 
 @section('content')
     <div class="page-header">
-        <h1>✏️ Éditer le Devis #{{ $devis->numero }}</h1>
-        <a href="{{ route('devis.index') }}" class="btn btn-secondary">← Retour à la liste</a>
+        <h1>✏️ Éditer {{ $devis->type === 'facture' ? 'la Facture' : 'le Devis' }} #{{ $devis->numero }}</h1>
+        <a href="{{ $devis->type === 'facture' ? route('factures.index') : route('devis.index') }}" class="btn btn-secondary">← Retour à la liste</a>
     </div>
 
     <div class="content-card">
-        <form action="{{ route('devis.update', $devis->id) }}" method="POST" id="devisForm">
+        <form action="{{ route('devis.update', $devis->id) }}" method="POST" id="devisForm" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
-        <div class="form-row" style="margin-bottom: 24px;">
+        <div class="form-row" style="margin-bottom: 16px;">
             <div class="form-group" style="flex: 2;">
                 <label>Sélectionner le Client</label>
-                <select name="client_id" required>
+                <select name="client_id" id="client_id" required onchange="updateClientLogo(this)">
                     <option value="">-- Choisir un client --</option>
                     @foreach($clients as $client)
-                        <option value="{{ $client->id }}" {{ $devis->client_id == $client->id ? 'selected' : '' }}>{{ $client->raison_sociale }}</option>
+                        @php $clientLogoUrl = $client->logo ? asset('storage/' . $client->logo) : ''; @endphp
+                        <option value="{{ $client->id }}"
+                                data-logo="{{ $clientLogoUrl }}"
+                                {{ $devis->client_id == $client->id ? 'selected' : '' }}>
+                            {{ $client->raison_sociale }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -38,7 +43,27 @@
                     <input type="date" name="date_emission" id="date_emission" value="{{ old('date_emission', \Carbon\Carbon::parse($devis->date_emission)->format('Y-m-d')) }}" required style="flex: 1; min-width: 160px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('date_emission').value = new Date().toISOString().slice(0,10)">Aujourd'hui</button>
                 </div>
-                <small style="color: #6b7280; display: block; margin-top: 4px;">Cette date figure sur le PDF. « Créé le » reste la date d’enregistrement initial.</small>
+                <small style="color: #6b7280; display: block; margin-top: 4px;">Cette date figure sur le PDF. « Créé le » reste la date d'enregistrement initial.</small>
+            </div>
+        </div>
+
+        {{-- Logo du destinataire --}}
+        @php $cLogo = $devis->client->logo ?? null; @endphp
+        @php $cLogoSrc = $cLogo ? asset('storage/'.$cLogo) : ''; @endphp
+        <div style="margin-bottom: 24px; padding: 14px 16px; border: 1px solid var(--border, #e5e7eb); border-radius: 8px; background: #fafafa;">
+            <label style="font-size: 13px; font-weight: 500; margin-bottom: 10px; display: block;">Logo du destinataire (client)</label>
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                <img id="client-logo-preview" src="{{ $cLogoSrc }}" alt="Logo client"
+                     {{ $cLogo ? '' : 'hidden' }}
+                     style="max-width:100px;max-height:70px;object-fit:contain;border:1px solid #e5e7eb;border-radius:6px;">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label for="client_logo" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px dashed #d1d5db; border-radius: 6px; font-size: 12px; color: #6b7280; cursor: pointer; font-weight: 400;">
+                        📎 Changer le logo du client
+                    </label>
+                    <input type="file" id="client_logo" name="client_logo" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp"
+                           style="display: none;" onchange="previewClientLogo(this)">
+                    <span id="client-logo-info" style="font-size: 11px; color: #9ca3af;">PNG ou JPG — max 4 Mo. Apparaît sur le PDF.</span>
+                </div>
             </div>
         </div>
 
@@ -188,5 +213,43 @@
         document.getElementById('btn-tva-18')?.classList.toggle('active', Math.abs(p - 18) < 0.001);
         calculateTotals();
     })();
+
+    function updateClientLogo(select) {
+        const opt = select.options[select.selectedIndex];
+        const logo = opt ? opt.getAttribute('data-logo') : '';
+        const img = document.getElementById('client-logo-preview');
+        const info = document.getElementById('client-logo-info');
+        if (logo) {
+            img.src = logo;
+            img.style.display = 'block';
+        } else {
+            img.src = '';
+            img.style.display = 'none';
+        }
+        // Reset upload input when client changes
+        document.getElementById('client_logo').value = '';
+        info.textContent = 'PNG ou JPG — max 4 Mo. Apparaît sur le PDF.';
+        info.style.color = '#9ca3af';
+    }
+
+    function previewClientLogo(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 4 * 1024 * 1024) {
+            document.getElementById('client-logo-info').textContent = '⚠ Fichier trop lourd (max 4 Mo).';
+            document.getElementById('client-logo-info').style.color = '#dc2626';
+            input.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById('client-logo-preview');
+            img.src = e.target.result;
+            img.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+        document.getElementById('client-logo-info').textContent = file.name + ' — prêt à enregistrer';
+        document.getElementById('client-logo-info').style.color = '#15803d';
+    }
 </script>
 @endsection

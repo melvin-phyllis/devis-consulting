@@ -208,6 +208,17 @@
     </div>
 </div>
 
+@if($errors->any())
+<div class="alert alert-error" style="margin-bottom: 16px;">
+    <strong>Erreur(s) lors de l'enregistrement :</strong>
+    <ul style="margin: 6px 0 0 18px; padding: 0;">
+        @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
+
 <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data">
     @csrf
     @method('PUT')
@@ -448,14 +459,18 @@
             </div>
             <div class="settings-card-body">
                 <div class="file-wrap">
-                    @if(!empty($settings->logo))
-                        <img src="{{ asset('storage/' . $settings->logo) }}" class="file-preview-img" alt="Logo actuel">
-                    @endif
-                    <label class="file-input-label" for="input-logo">
+                    <img id="preview-logo"
+                         src="{{ !empty($settings->logo) ? asset('storage/' . $settings->logo) : '' }}"
+                         class="file-preview-img"
+                         alt="Logo actuel"
+                         style="{{ empty($settings->logo) ? 'display:none;' : '' }}">
+                    <label class="file-input-label" for="input-logo" id="label-logo">
                         📎 {{ !empty($settings->logo) ? 'Changer le logo' : 'Choisir un fichier' }}
                     </label>
-                    <input type="file" id="input-logo" name="logo" accept="image/*">
-                    <span style="font-size:11px;color:var(--slate);">PNG ou JPG recommandé — max 2 Mo</span>
+                    <input type="file" id="input-logo" name="logo" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp"
+                           onchange="previewImage(this, 'preview-logo', 'label-logo', 'info-logo')">
+                    <span id="info-logo" style="font-size:11px;color:var(--slate);">PNG ou JPG recommandé — max 4 Mo</span>
+                    @error('logo')<span style="font-size:11px;color:#dc2626;font-weight:500;">{{ $message }}</span>@enderror
                 </div>
             </div>
         </div>
@@ -471,14 +486,18 @@
             </div>
             <div class="settings-card-body">
                 <div class="file-wrap">
-                    @if(!empty($settings->cachet))
-                        <img src="{{ asset('storage/' . $settings->cachet) }}" class="file-preview-img" alt="Cachet actuel">
-                    @endif
-                    <label class="file-input-label" for="input-cachet">
+                    <img id="preview-cachet"
+                         src="{{ !empty($settings->cachet) ? asset('storage/' . $settings->cachet) : '' }}"
+                         class="file-preview-img"
+                         alt="Cachet actuel"
+                         style="{{ empty($settings->cachet) ? 'display:none;' : '' }}">
+                    <label class="file-input-label" for="input-cachet" id="label-cachet">
                         📎 {{ !empty($settings->cachet) ? 'Changer le cachet' : 'Choisir un fichier' }}
                     </label>
-                    <input type="file" id="input-cachet" name="cachet" accept="image/*">
-                    <span style="font-size:11px;color:var(--slate);">PNG avec fond transparent recommandé</span>
+                    <input type="file" id="input-cachet" name="cachet" accept="image/png,image/jpeg,image/gif,image/svg+xml,image/webp"
+                           onchange="previewImage(this, 'preview-cachet', 'label-cachet', 'info-cachet')">
+                    <span id="info-cachet" style="font-size:11px;color:var(--slate);">PNG avec fond transparent recommandé — max 4 Mo</span>
+                    @error('cachet')<span style="font-size:11px;color:#dc2626;font-weight:500;">{{ $message }}</span>@enderror
                 </div>
             </div>
         </div>
@@ -498,6 +517,39 @@
 
 @section('scripts')
 <script>
+function previewImage(input, previewId, labelId, infoId) {
+    var file = input.files[0];
+    if (!file) return;
+
+    var maxMo = 4;
+    if (file.size > maxMo * 1024 * 1024) {
+        document.getElementById(infoId).textContent = '⚠ Fichier trop lourd (' + (file.size / 1024 / 1024).toFixed(1) + ' Mo). Maximum : ' + maxMo + ' Mo.';
+        document.getElementById(infoId).style.color = '#dc2626';
+        input.value = '';
+        return;
+    }
+
+    var allowed = ['image/png','image/jpeg','image/gif','image/svg+xml','image/webp'];
+    if (!allowed.includes(file.type)) {
+        document.getElementById(infoId).textContent = '⚠ Format non supporté. Utilisez PNG, JPG, GIF, SVG ou WEBP.';
+        document.getElementById(infoId).style.color = '#dc2626';
+        input.value = '';
+        return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var img = document.getElementById(previewId);
+        img.src = e.target.result;
+        img.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+
+    document.getElementById(labelId).textContent = '📎 ' + file.name;
+    document.getElementById(infoId).textContent = (file.size / 1024).toFixed(0) + ' Ko — prêt à enregistrer';
+    document.getElementById(infoId).style.color = '#15803d';
+}
+
 function selectTemplate(radio) {
     document.querySelectorAll('.template-card').forEach(function(c) { c.classList.remove('tpl-selected'); });
     radio.closest('.template-card').classList.add('tpl-selected');

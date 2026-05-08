@@ -47,7 +47,7 @@
         </div>
         <div class="btn-group">
             <a href="{{ $devis->type === 'facture' ? route('factures.index') : route('devis.index') }}" class="btn btn-secondary">← Retour</a>
-            @if($devis->type === 'devis')
+            @if(!($devis->type === 'facture' && $devis->statut_paiement === 'soldée'))
                 <a href="{{ route('devis.edit', $devis->id) }}" class="btn btn-warning">✏️ Éditer</a>
             @endif
             <a href="{{ route('devis.download', $devis->id) }}" class="btn btn-info">📥 PDF</a>

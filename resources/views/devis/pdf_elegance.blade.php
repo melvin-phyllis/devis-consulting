@@ -309,13 +309,21 @@
                     </tr>
                     <tr>
                         <td colspan="2" style="padding: 8px 10px; vertical-align: top; background: #f8f9fa;">
-                            @if($clientLogoBase64 ?? null)
-                                <img src="{{ $clientLogoBase64 }}" style="width: 55px; height: auto; margin-bottom: 4px; display: block;">
-                            @endif
-                            <strong style="font-size: 12px; color: #061b31;">{{ $devis->client->raison_sociale }}</strong><br>
-                            @if($devis->client->adresse ?? null)
-                                <span style="color: #555; font-size: 10px;">{{ $devis->client->adresse }}</span>
-                            @endif
+                            <table style="width:100%; border-collapse:collapse;">
+                                <tr>
+                                    @if($clientLogoBase64 ?? null)
+                                    <td style="width:110px; vertical-align:middle; padding-right:10px;">
+                                        <img src="{{ $clientLogoBase64 }}" style="max-width:100px; max-height:75px; width:auto; height:auto; display:block;">
+                                    </td>
+                                    @endif
+                                    <td style="vertical-align:middle;">
+                                        <strong style="font-size:12px; color:#061b31;">{{ $devis->client->raison_sociale }}</strong>
+                                        @if($devis->client->adresse ?? null)
+                                            <br><span style="color:#555; font-size:10px;">{{ $devis->client->adresse }}</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                 </table>
